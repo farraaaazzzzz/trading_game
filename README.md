@@ -1,6 +1,6 @@
 # Trading Game Web App
 
-This project is a web-based trading game designed for your Final Year Project (FYP). The app allows users to log in, view dynamically updating stock prices, and perform actions such as buying or selling stocks. User actions are logged for analysis, making it an excellent tool for experimental or educational purposes.
+This project is a web-based trading game designed for our Final Year Project (FYP) in Institute of Business and Administration (IBA). The app allows users to log in, view dynamically updating stock prices, and perform actions such as buying or selling stocks. User actions are logged for analysis, making it an excellent tool for experimental or educational purposes.
 
 ---
 
