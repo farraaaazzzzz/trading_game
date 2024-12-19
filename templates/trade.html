@@ -31,6 +31,7 @@
     <h1>Trading Game</h1>
     <p>User: {{ username }}</p>
     <p>Capital: $<span id="capital">{{ capital }}</span></p>
+    <h3>Round: {{ round }}</h3>
     <p id="timer">Time Left: 01:45</p>
     <div class="container">
       <div class="left">
@@ -43,10 +44,18 @@
       </div>
       <div class="right">
         <div class="ticker">
-          <button onclick="selectTicker('MSFT')">MSFT</button>
-          <button onclick="selectTicker('AAPL')">AAPL</button>
-          <button onclick="selectTicker('GOOG')">GOOG</button>
-          <button onclick="selectTicker('TSLA')">TSLA</button>
+          <button onclick="selectTicker('MSFT')">
+            MSFT: $<span id="price-MSFT">{{ prices['MSFT'] }}</span>
+          </button>
+          <button onclick="selectTicker('AAPL')">
+            AAPL: $<span id="price-AAPL">{{ prices['AAPL'] }}</span>
+          </button>
+          <button onclick="selectTicker('GOOG')">
+            GOOG: $<span id="price-GOOG">{{ prices['GOOG'] }}</span>
+          </button>
+          <button onclick="selectTicker('TSLA')">
+            TSLA: $<span id="price-TSLA">{{ prices['TSLA'] }}</span>
+          </button>
         </div>
         <button onclick="trade('Buy')">Buy</button>
         <input type="number" id="quantity" value="1" min="1" />
@@ -55,12 +64,33 @@
     </div>
     <script>
       let selectedTicker = "MSFT";
+      let timeLeft = 105; // 1 minute 45 seconds
+
       function selectTicker(ticker) {
         selectedTicker = ticker;
-        document.getElementById("stock-image").src = `/static/${ticker}.png`;
+        const imagePath = `/static/${ticker}.png`;
+        fetch(imagePath, { method: "HEAD" })
+          .then((response) => {
+            if (response.ok) {
+              document.getElementById("stock-image").src = imagePath;
+            } else {
+              alert("Image not found for ticker: " + ticker);
+            }
+          })
+          .catch(() => {
+            alert("Error loading image for ticker: " + ticker);
+          });
       }
+
       function trade(action) {
-        const quantity = document.getElementById("quantity").value;
+        const quantityElement = document.getElementById("quantity");
+        const quantity = parseInt(quantityElement.value, 10);
+
+        if (isNaN(quantity) || quantity <= 0) {
+          alert("Please enter a valid quantity greater than 0.");
+          return;
+        }
+
         fetch("/action", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -71,11 +101,39 @@
             quantity,
           }),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to process the trade.");
+            }
+            return response.json();
+          })
           .then((data) => {
             document.getElementById("capital").innerText = data.capital;
+          })
+          .catch((error) => {
+            alert("An error occurred: " + error.message);
           });
       }
+
+      function startTimer() {
+        const timerElement = document.getElementById("timer");
+        const interval = setInterval(() => {
+          if (timeLeft <= 0) {
+            clearInterval(interval);
+            alert("Time's up! Moving to the next round...");
+            location.reload(); // Reload the page to refresh stock prices
+          } else {
+            timeLeft--;
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.innerText = `Time Left: ${minutes
+              .toString()
+              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+          }
+        }, 1000);
+      }
+
+      window.onload = startTimer;
     </script>
   </body>
 </html>

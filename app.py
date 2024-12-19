@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import flask.cli  # Import CLI utilities
 import csv
 import time
+import random
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
@@ -21,6 +22,15 @@ def log_action(username, action, ticker, quantity, capital_before, capital_after
     with open("trading_logs.csv", "a", newline="") as file:
         writer = csv.writer(file)
         writer.writerow([username, time.strftime("%Y-%m-%d %H:%M:%S"), action, ticker, quantity, capital_before, capital_after])
+        
+
+# f(x) to stimulate stock prices
+def update_stock_prices():
+    global stock_prices
+    for ticker in stock_prices:
+        # Randomly adjust prices by ±10%
+        change = random.uniform(-0.1, 0.1)  # -10% to +10%
+        stock_prices[ticker] = round(stock_prices[ticker] * (1 + change), 2)
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -35,12 +45,23 @@ def login():
         return "Invalid credentials", 401
     return render_template("login.html")
 
+# @app.route("/trade/<username>")
+# def trade(username):
+#     user = User.query.filter_by(username=username).first()
+#     if not user:
+#         return "Unauthorized", 403
+#     return render_template("trade.html", username=username, capital=user.capital)
+
 @app.route("/trade/<username>")
 def trade(username):
     user = User.query.filter_by(username=username).first()
     if not user:
         return "Unauthorized", 403
-    return render_template("trade.html", username=username, capital=user.capital)
+
+    # Update stock prices for the round
+    update_stock_prices()
+
+    return render_template("trade.html", username=username, capital=user.capital, prices=stock_prices)
 
 @app.route("/action", methods=["POST"])
 def action():
@@ -56,6 +77,14 @@ def action():
 
     capital_before = user.capital
     price = 100  # Fixed price for simplicity
+    
+# dictionary to store dynamic prices
+stock_prices = {
+    "MSFT": 100,
+    "AAPL": 120,
+    "GOOG": 150,
+    "TSLA": 200
+}
 
     # Update user capital
     if action == "Buy":
