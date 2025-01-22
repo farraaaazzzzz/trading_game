@@ -34,30 +34,39 @@ This project is a web-based trading game designed for our Final Year Project (FY
 ## **Setup Instructions**
 
 ### **1. Clone the Repository**
+
 Clone the project from the shared source:
+
 ```bash
 git clone <repository-url>
 cd trading_game
 ```
 
 ### **2. Install Dependencies**
+
 Install the required Python packages:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### **3. Initialize the Database**
+
 Run the following command to set up the database and populate initial stock prices:
+
 ```bash
 flask init-db
 ```
 
 This creates the `users.db` SQLite database with the following tables:
+
 - `User` (for user accounts)
 - `StockPrice` (for stock price management)
 
 ### **4. Run the Application**
+
 Start the Flask server:
+
 ```bash
 python app.py
 ```
@@ -65,7 +74,9 @@ python app.py
 The application will be available at `http://127.0.0.1:5000/`.
 
 ### **5. Testing the App**
+
 1. Log in using one of the predefined credentials:
+
    - **Username**: `user1`
    - **Password**: `password1`
 
@@ -97,31 +108,42 @@ trading_game/
 ## **File Explanations**
 
 ### **1. app.py**
+
 The backend Flask application:
+
 - Manages routes for login (`/`) and trading (`/trade/<username>`).
 - Handles stock price updates and user actions (`/action`).
 - Logs user actions in a CSV file.
 - Defines database models (`User`, `StockPrice`).
 
 ### **2. templates/**
+
 Contains HTML templates for the frontend:
+
 - **login.html**: User login page.
 - **trade.html**: Main trading interface with dynamic prices and timer.
 
 ### **3. static/**
+
 Directory for static assets such as images, JavaScript, and CSS.
 
 ### **4. users.db**
+
 SQLite database file to store:
+
 - User credentials and capital.
 - Stock prices.
 
 ### **5. trading_logs.csv**
+
 CSV file that logs each user action:
+
 - `username`, `timestamp`, `action`, `ticker`, `quantity`, `capital_before`, `capital_after`.
 
 ### **6. requirements.txt**
+
 Contains all Python dependencies for the project:
+
 ```
 Flask
 Flask-SQLAlchemy
@@ -139,6 +161,7 @@ Flask-SQLAlchemy
 ---
 
 ## **Contributors**
+
 - **You**: Faraz Shaikh
 - **Partner**: Hassan Naeem
 
