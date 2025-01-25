@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{# comment <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -25,16 +25,23 @@
         font-size: 20px;
         font-weight: bold;
       }
+      .total {
+        margin-top: 10px;
+        font-size: 18px;
+        font-weight: bold;
+      }
     </style>
   </head>
   <body>
     <h1>FYP-Faraz-Hassan</h1>
     <p>User: {{ username }}</p>
+    <p>Turn: {{ turn }} / 10</p>
+    <p>{{ headline }}</p>
     <div class="container">
       <div class="left">
         <img
           id="stock-image"
-          src="/static/MSFT.png"
+          src="{{ stock_data['MSFT']['image'] }}"
           alt="Stock Image"
           width="100%"
         />
@@ -44,18 +51,27 @@
         <p>Capital: $<span id="capital">{{ capital }}</span></p>
         <div class="ticker">
           <button onclick="selectTicker('MSFT')">
-            MSFT: $<span id="price-MSFT">{{ prices['MSFT'] }}</span>
+            MSFT: $<span id="price-MSFT"
+              >{{ stock_data['MSFT']['price'] }}</span
+            >
           </button>
           <button onclick="selectTicker('AAPL')">
-            AAPL: $<span id="price-AAPL">{{ prices['AAPL'] }}</span>
+            AAPL: $<span id="price-AAPL"
+              >{{ stock_data['AAPL']['price'] }}</span
+            >
           </button>
           <button onclick="selectTicker('GOOG')">
-            GOOG: $<span id="price-GOOG">{{ prices['GOOG'] }}</span>
+            GOOG: $<span id="price-GOOG"
+              >{{ stock_data['GOOG']['price'] }}</span
+            >
           </button>
           <button onclick="selectTicker('TSLA')">
-            TSLA: $<span id="price-TSLA">{{ prices['TSLA'] }}</span>
+            TSLA: $<span id="price-TSLA"
+              >{{ stock_data['TSLA']['price'] }}</span
+            >
           </button>
         </div>
+        <div class="total">Total: $<span id="total-price">0.00</span></div>
         <button onclick="trade('Buy')">Buy</button>
         <input
           type="number"
@@ -65,30 +81,38 @@
           oninput="updateTotal()"
         />
         <button onclick="trade('Sell')">Sell</button>
-        <p>Total: $<span id="total-price">0.00</span></p>
       </div>
     </div>
     <script>
       let selectedTicker = "MSFT";
-      let timeLeft = 105; // 1 minute 45 seconds
+      let stockImages = {
+        MSFT: "{{ stock_data['MSFT']['image'] }}",
+        AAPL: "{{ stock_data['AAPL']['image'] }}",
+        GOOG: "{{ stock_data['GOOG']['image'] }}",
+        TSLA: "{{ stock_data['TSLA']['image'] }}",
+      };
 
+      // Update the selected ticker
       function selectTicker(ticker) {
         selectedTicker = ticker;
-        const imagePath = `/static/${ticker}.png`;
-        fetch(imagePath, { method: "HEAD" })
-          .then((response) => {
-            if (response.ok) {
-              document.getElementById("stock-image").src = imagePath;
-            } else {
-              alert("Image not found for ticker: " + ticker);
-            }
-          })
-          .catch(() => {
-            alert("Error loading image for ticker: " + ticker);
-          });
+        document.getElementById("stock-image").src = stockImages[ticker];
         updateTotal();
       }
 
+      // Update total price based on selected quantity and stock price
+      function updateTotal() {
+        const quantity = parseInt(
+          document.getElementById("quantity").value,
+          10
+        );
+        const price = parseFloat(
+          document.getElementById(`price-${selectedTicker}`).innerText
+        );
+        const total = isNaN(quantity) || isNaN(price) ? 0 : quantity * price;
+        document.getElementById("total-price").innerText = total.toFixed(2);
+      }
+
+      // Handle Buy/Sell actions
       function trade(action) {
         const quantityElement = document.getElementById("quantity");
         const quantity = parseInt(quantityElement.value, 10);
@@ -116,12 +140,144 @@
           })
           .then((data) => {
             document.getElementById("capital").innerText = data.capital;
+            updateTotal();
           })
           .catch((error) => {
             alert("An error occurred: " + error.message);
           });
       }
 
+      // Start the countdown timer
+      function startTimer() {
+        const timerElement = document.getElementById("timer");
+        let timeLeft = 105; // 1 minute 45 seconds
+        const interval = setInterval(() => {
+          if (timeLeft <= 0) {
+            clearInterval(interval);
+            alert("Time's up! Moving to the next round...");
+            location.reload();
+          } else {
+            timeLeft--;
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.innerText = `Time Left: ${minutes
+              .toString()
+              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+          }
+        }, 1000);
+      }
+
+      window.onload = () => {
+        startTimer();
+        updateTotal();
+      };
+    </script>
+  </body>
+</html>
+endcomment #}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.5" />
+    <title>Trade</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        display: flex;
+        justify-content: space-between;
+      }
+      .left,
+      .right {
+        width: 45%;
+      }
+      .ticker button {
+        padding: 10px;
+        margin: 5px;
+      }
+      #timer {
+        font-size: 20px;
+        font-weight: bold;
+      }
+      .total {
+        margin-top: 10px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>FYP-Faraz-Hassan</h1>
+    <p>User: {{ username }}</p>
+    <p>Turn: {{ turn }} / 10</p>
+    <p>{{ headline }}</p>
+    <div class="container">
+      <div class="left">
+        <img
+          id="stock-image"
+          src="{{ stock_data['MSFT']['image'] }}"
+          alt="Stock Image"
+          width="100%"
+        />
+      </div>
+      <div class="right">
+        <p id="timer">Time Left: 01:45</p>
+        <p>Capital: $<span id="capital">{{ capital }}</span></p>
+        <div class="ticker">
+          <button onclick="selectTicker('MSFT')">
+            MSFT: $<span id="price-MSFT"
+              >{{ stock_data['MSFT']['price'] }}</span
+            >
+          </button>
+          <button onclick="selectTicker('AAPL')">
+            AAPL: $<span id="price-AAPL"
+              >{{ stock_data['AAPL']['price'] }}</span
+            >
+          </button>
+          <button onclick="selectTicker('GOOG')">
+            GOOG: $<span id="price-GOOG"
+              >{{ stock_data['GOOG']['price'] }}</span
+            >
+          </button>
+          <button onclick="selectTicker('TSLA')">
+            TSLA: $<span id="price-TSLA"
+              >{{ stock_data['TSLA']['price'] }}</span
+            >
+          </button>
+        </div>
+        <div class="total">Total: $<span id="total-price">0.00</span></div>
+        <button onclick="trade('Buy')">Buy</button>
+        <input
+          type="number"
+          id="quantity"
+          value="1"
+          min="1"
+          oninput="updateTotal()"
+        />
+        <button onclick="trade('Sell')">Sell</button>
+      </div>
+    </div>
+    <script>
+      let selectedTicker = "MSFT";
+      let stockImages = {
+        MSFT: "{{ stock_data['MSFT']['image'] }}",
+        AAPL: "{{ stock_data['AAPL']['image'] }}",
+        GOOG: "{{ stock_data['GOOG']['image'] }}",
+        TSLA: "{{ stock_data['TSLA']['image'] }}",
+      };
+
+      // Update the selected ticker
+      function selectTicker(ticker) {
+        selectedTicker = ticker;
+        document.getElementById("stock-image").src = stockImages[ticker];
+        updateTotal();
+      }
+
+      // Update total price based on selected quantity and stock price
       function updateTotal() {
         const quantity = parseInt(
           document.getElementById("quantity").value,
@@ -134,13 +290,64 @@
         document.getElementById("total-price").innerText = total.toFixed(2);
       }
 
+      // Handle Buy/Sell actions
+      function trade(action) {
+        const quantityElement = document.getElementById("quantity");
+        const quantity = parseInt(quantityElement.value, 10);
+
+        if (isNaN(quantity) || quantity <= 0) {
+          alert("Please enter a valid quantity greater than 0.");
+          return;
+        }
+
+        fetch("/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: "{{ username }}",
+            action,
+            ticker: selectedTicker,
+            quantity,
+          }),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to process the trade.");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            document.getElementById("capital").innerText = data.capital;
+            updateTotal();
+          })
+          .catch((error) => {
+            alert("An error occurred: " + error.message);
+          });
+      }
+
+      // Start the countdown timer and advance to the next round
       function startTimer() {
         const timerElement = document.getElementById("timer");
+        let timeLeft = 105; // 1 minute 45 seconds
         const interval = setInterval(() => {
           if (timeLeft <= 0) {
             clearInterval(interval);
             alert("Time's up! Moving to the next round...");
-            location.reload(); // Reload the page to refresh stock prices
+
+            // Advance the turn via AJAX
+            fetch("/next-turn", { method: "POST" })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.message === "Game Over") {
+                  alert("Game Over! Thanks for playing.");
+                  location.href = "/";
+                } else {
+                  location.reload(); // Refresh to show the new turn
+                }
+              })
+              .catch((error) => {
+                alert("An error occurred: " + error.message);
+              });
           } else {
             timeLeft--;
             const minutes = Math.floor(timeLeft / 60);
@@ -152,6 +359,7 @@
         }, 1000);
       }
 
+      // Initialize the page
       window.onload = () => {
         startTimer();
         updateTotal();

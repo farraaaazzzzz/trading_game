@@ -1,13 +1,207 @@
-from flask import Flask, render_template, request, redirect, jsonify
+# from flask import Flask, render_template, request, redirect, jsonify, session
+# from flask_sqlalchemy import SQLAlchemy
+# import os
+# import csv
+
+# app = Flask(__name__)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SECRET_KEY'] = os.urandom(24)  # Needed for session management
+# db = SQLAlchemy(app)
+
+# # User model
+# class User(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     username = db.Column(db.String(80), unique=True, nullable=False)
+#     password = db.Column(db.String(80), nullable=False)
+#     capital = db.Column(db.Float, default=1000.0)
+
+# # Game configuration: Headlines and stock prices with images
+# HEADLINES = [
+#     "MSFT announces record earnings!",
+#     "AAPL unveils a revolutionary product.",
+#     "GOOG faces government investigation.",
+#     "TSLA launches a new electric vehicle.",
+#     "MSFT acquires a leading AI company.",
+#     "AAPL's new iPhone dominates sales.",
+#     "GOOG integrates AI into search engines.",
+#     "TSLA develops innovative battery technology.",
+#     "MSFT collaborates with major tech companies.",
+#     "AAPL rumored to enter the automotive market."
+# ]
+
+# STOCK_PRICES = [
+#     {
+#         "MSFT": {"price": 100, "image": "/static/turn1/MSFT.png"},
+#         "AAPL": {"price": 120, "image": "/static/turn1/AAPL.png"},
+#         "GOOG": {"price": 150, "image": "/static/turn1/GOOG.png"},
+#         "TSLA": {"price": 200, "image": "/static/turn1/TSLA.png"},
+#     },
+#     {
+#         "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+#         "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+#         "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+#         "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+#     },
+#     {
+#         "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+#         "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+#         "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+#         "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+#     },
+#     {
+#         "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+#         "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+#         "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+#         "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+#     },
+#     {
+#         "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+#         "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+#         "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+#         "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+#     },
+#     {
+#         "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+#         "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+#         "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+#         "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+#     },
+#     {
+#         "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+#         "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+#         "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+#         "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+#     },
+#     {
+#         "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+#         "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+#         "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+#         "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+#     },
+#     {
+#         "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+#         "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+#         "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+#         "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+#     },
+#     {
+#         "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+#         "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+#         "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+#         "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+#     },
+# ]
+
+# # Initialize CSV for trade logs
+# LOG_FILE = "trading_log.csv"
+# if not os.path.exists(LOG_FILE):
+#     with open(LOG_FILE, "w", newline="") as file:
+#         writer = csv.writer(file)
+#         writer.writerow(["username", "turn", "action", "ticker", "quantity", "capital_before", "capital_after"])
+
+# @app.route("/", methods=["GET", "POST"])
+# def login():
+#     if request.method == "POST":
+#         username = request.form["username"]
+#         password = request.form["password"]
+#         user = User.query.filter_by(username=username).first()
+#         if user and user.password == password:
+#             # Reset capital to 100,000 on every login
+#             user.capital = 100000.0
+#             db.session.commit()
+
+#             session["username"] = username
+#             session["turn"] = 0  # Initialize turn counter
+#             return redirect("/trade")
+#         return "Invalid credentials", 401
+#     return render_template("login.html")
+
+# @app.route("/trade")
+# def trade():
+#     username = session.get("username")
+#     if not username:
+#         return redirect("/")
+    
+#     turn = session.get("turn", 0)
+#     if turn >= 10:  # Game ends after 10 turns
+#         return "Game Over! Thank you for playing."
+
+#     stock_data = STOCK_PRICES[turn]
+#     user = User.query.filter_by(username=username).first()
+#     return render_template(
+#         "trade.html",
+#         username=username,
+#         capital=user.capital,
+#         stock_data=stock_data,
+#         headline=HEADLINES[turn],
+#         turn=turn + 1
+#     )
+
+# @app.route("/action", methods=["POST"])
+# def action():
+#     data = request.json
+#     username = data.get("username")
+#     action = data.get("action")
+#     ticker = data.get("ticker")
+#     quantity = int(data.get("quantity", 0))
+
+#     user = User.query.filter_by(username=username).first()
+#     turn = session.get("turn", 0)
+#     if not user or turn >= 10:
+#         return jsonify({"error": "Invalid user or game over"}), 400
+
+#     prices = STOCK_PRICES[turn]
+#     stock = prices.get(ticker)
+#     if not stock:
+#         return jsonify({"error": "Invalid ticker"}), 400
+
+#     price = stock["price"]
+#     capital_before = user.capital
+
+#     # Process the action
+#     if action == "Buy":
+#         cost = price * quantity
+#         if capital_before >= cost:
+#             user.capital -= cost
+#         else:
+#             return jsonify({"error": "Insufficient funds"}), 400
+#     elif action == "Sell":
+#         user.capital += price * quantity
+
+#     capital_after = user.capital
+#     db.session.commit()  # Update the database
+
+#     # Log the trade to CSV
+#     with open(LOG_FILE, "a", newline="") as file:
+#         writer = csv.writer(file)
+#         writer.writerow([username, turn + 1, action, ticker, quantity, capital_before, capital_after])
+
+#     session["turn"] += 1  # Advance to the next turn
+#     return jsonify({"capital": user.capital})
+
+# @app.cli.command("init-db")
+# def init_db():
+#     db.create_all()
+#     if not User.query.first():
+#         db.session.add(User(username="user1", password="password1"))
+#         db.session.commit()
+#     print("Database initialized.")
+
+# if __name__ == "__main__":
+#     app.run(debug=True)
+
+
+from flask import Flask, render_template, request, redirect, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
-import flask.cli  # Import CLI utilities
+import os
 import csv
-import time
-import random
+from datetime import datetime  # Import at the top of the file
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.urandom(24)  # Needed for session management
 db = SQLAlchemy(app)
 
 # User model
@@ -15,80 +209,150 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
-    capital = db.Column(db.Float, default=1000.0)
+    capital = db.Column(db.Float, default=100000.0)
 
-# StockPrice model
-class StockPrice(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    ticker = db.Column(db.String(10), unique=True, nullable=False)
-    price = db.Column(db.Float, nullable=False)
+# Game configuration: Headlines and stock prices with images
+HEADLINES = [
+    "MSFT announces record earnings!",
+    "AAPL unveils a revolutionary product.",
+    "GOOG faces government investigation.",
+    "TSLA launches a new electric vehicle.",
+    "MSFT acquires a leading AI company.",
+    "AAPL's new iPhone dominates sales.",
+    "GOOG integrates AI into search engines.",
+    "TSLA develops innovative battery technology.",
+    "MSFT collaborates with major tech companies.",
+    "AAPL rumored to enter the automotive market."
+]
 
-# Log user actions to CSV
-def log_action(username, action, ticker, quantity, capital_before, capital_after):
-    with open("trading_logs.csv", "a", newline="") as file:
+STOCK_PRICES = [
+    {
+        "MSFT": {"price": 100, "image": "/static/turn1/MSFT.png"},
+        "AAPL": {"price": 120, "image": "/static/turn1/AAPL.png"},
+        "GOOG": {"price": 150, "image": "/static/turn1/GOOG.png"},
+        "TSLA": {"price": 200, "image": "/static/turn1/TSLA.png"},
+    },
+    {
+        "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+        "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+        "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+        "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+    },
+    {
+        "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+        "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+        "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+        "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+    },
+    {
+        "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+        "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+        "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+        "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+    },
+    {
+        "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+        "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+        "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+        "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+    },
+    {
+        "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+        "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+        "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+        "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+    },
+    {
+        "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+        "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+        "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+        "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+    },
+    {
+        "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+        "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+        "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+        "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+    },
+    {
+        "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+        "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+        "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+        "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+    },
+    {
+        "MSFT": {"price": 110, "image": "/static/turn2/MSFT.png"},
+        "AAPL": {"price": 130, "image": "/static/turn2/AAPL.png"},
+        "GOOG": {"price": 140, "image": "/static/turn2/GOOG.png"},
+        "TSLA": {"price": 210, "image": "/static/turn2/TSLA.png"},
+    },
+]
+
+# Initialize CSV for trade logs
+LOG_FILE = "trading_log.csv"
+if not os.path.exists(LOG_FILE):
+    with open(LOG_FILE, "w", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow([username, time.strftime("%Y-%m-%d %H:%M:%S"), action, ticker, quantity, capital_before, capital_after])
-
-# Update stock prices
-def update_stock_prices():
-    stocks = StockPrice.query.all()
-    for stock in stocks:
-        change = random.uniform(-0.1, 0.1)  # -10% to +10%
-        stock.price = round(stock.price * (1 + change), 2)
-    db.session.commit()
+        writer.writerow(["username", "turn", "action", "ticker", "quantity", "capital_before", "capital_after"])
 
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-
-        # Authenticate user
         user = User.query.filter_by(username=username).first()
         if user and user.password == password:
-            return redirect(f"/trade/{username}")
+            user.capital = 100000.0  # Reset capital on login
+            db.session.commit()
+            session["username"] = username
+            session["turn"] = 0  # Reset the turn
+            return redirect("/trade")
         return "Invalid credentials", 401
     return render_template("login.html")
 
-@app.route("/trade/<username>")
-def trade(username):
+@app.route("/trade")
+def trade():
+    username = session.get("username")
+    if not username:
+        return redirect("/")
+    
+    turn = session.get("turn", 0)
+    if turn >= len(STOCK_PRICES):
+        return "Game Over! Thank you for playing."
+
+    stock_data = STOCK_PRICES[turn]
     user = User.query.filter_by(username=username).first()
-    if not user:
-        return "Unauthorized", 403
-
-    # Update stock prices for the round
-    update_stock_prices()
-
-    # Fetch updated prices
-    prices = {stock.ticker: stock.price for stock in StockPrice.query.all()}
-
-    return render_template("trade.html", username=username, capital=user.capital, prices=prices)
+    return render_template(
+        "trade.html",
+        username=username,
+        capital=user.capital,
+        stock_data=stock_data,
+        headline=HEADLINES[turn],
+        turn=turn + 1
+    )
 
 @app.route("/action", methods=["POST"])
 def action():
     data = request.json
-    print(data)  # Log the incoming data for debugging
     username = data.get("username")
     action = data.get("action")
     ticker = data.get("ticker")
-    quantity = data.get("quantity")
+    quantity = int(data.get("quantity", 0))
 
-    if not all([username, action, ticker, quantity]):
-        return jsonify({"error": "Missing data"}), 400
-
-    # Get user and validate ticker
     user = User.query.filter_by(username=username).first()
-    if not user:
-        return jsonify({"error": "Unauthorized user"}), 403
+    turn = session.get("turn", 0)
+    if not user or turn >= len(STOCK_PRICES):
+        return jsonify({"error": "Invalid user or game over"}), 400
 
-    stock = StockPrice.query.filter_by(ticker=ticker).first()
+    prices = STOCK_PRICES[turn]
+    stock = prices.get(ticker)
     if not stock:
-        return jsonify({"error": "Invalid ticker symbol"}), 400
+        return jsonify({"error": "Invalid ticker"}), 400
 
-    price = stock.price
+    price = stock["price"]
     capital_before = user.capital
 
-    # Update user capital
+    # Process the action
     if action == "Buy":
         cost = price * quantity
         if capital_before >= cost:
@@ -98,33 +362,46 @@ def action():
     elif action == "Sell":
         user.capital += price * quantity
 
-    db.session.commit()  # Save changes
     capital_after = user.capital
+    db.session.commit()
 
-    # Log the action
-    log_action(username, action, ticker, quantity, capital_before, capital_after)
-    return jsonify({"capital": capital_after})
+    # Get the current timestamp
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-# CLI Command to initialize the database
+    # Log the trade to CSV with the timestamp
+    with open(LOG_FILE, "a", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow([
+            timestamp, username, turn + 1, action, ticker, quantity, 
+            capital_before, capital_after
+        ])
+
+    return jsonify({"capital": user.capital})
+
+@app.route("/next-turn", methods=["POST"])
+def next_turn():
+    username = session.get("username")
+    if not username:
+        return jsonify({"error": "Not logged in"}), 400
+
+    turn = session.get("turn", 0)
+    if turn >= len(STOCK_PRICES) - 1:
+        return jsonify({"message": "Game Over"}), 200
+
+    session["turn"] += 1
+    user = User.query.filter_by(username=username).first()
+    return jsonify({
+        "message": "Next turn started",
+        "capital": user.capital
+    })
+
 @app.cli.command("init-db")
 def init_db():
-    """Initialize the database."""
     db.create_all()
-
-    # Add initial stock prices
-    initial_prices = {
-        "MSFT": 100,
-        "AAPL": 120,
-        "GOOG": 150,
-        "TSLA": 200
-    }
-    for ticker, price in initial_prices.items():
-        stock = StockPrice(ticker=ticker, price=price)
-        db.session.add(stock)
-
-    db.session.commit()
-    print("Database initialized successfully.")
+    if not User.query.first():
+        db.session.add(User(username="user1", password="password1"))
+        db.session.commit()
+    print("Database initialized.")
 
 if __name__ == "__main__":
     app.run(debug=True)
-    
