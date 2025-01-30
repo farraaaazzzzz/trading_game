@@ -1,3 +1,4 @@
 {
-  "cSpell.words": ["pycache", "pytest"]
+  "cSpell.words": ["pycache", "pytest"],
+  "wolf.disableHotModeWarning": true
 }
