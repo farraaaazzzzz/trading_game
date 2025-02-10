@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.6" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trade</title>
     <style>
       body {
@@ -37,9 +37,10 @@
         font-weight: bold;
       }
       table {
-        width: 100%;
+        width: 80%;
         border-collapse: collapse;
         margin-top: 20px;
+        margin-right: 20px;
       }
       th,
       td {
@@ -61,7 +62,7 @@
   </head>
   <body>
     <div class="center">
-      <p id="timer">Time Left: 01:45</p>
+      <p id="timer">Time Left: 00:15</p>
       <p>Turn: {{ turn }} / 10</p>
     </div>
     <div class="container">
@@ -79,6 +80,7 @@
         </div>
         <div>
           <p>Capital: $<span id="capital">{{ capital }}</span></p>
+          <p>Portfolio: $<span id="portfolio">{{ portfolio_value }}</span></p>
         </div>
         <div class="ticker">
           {% for ticker, data in stock_data.items() %}
@@ -116,10 +118,44 @@
       </div>
     </div>
     <script>
-      // Define variables
       let selectedTicker = "MSFT";
 
-      // Function to select a ticker
+      // Parse holdings from the server-side context
+      let holdings = JSON.parse(`{{ holdings | tojson | safe }}`);
+      let timeLeft = 15; // Total time for each turn in seconds
+
+      function startTimer() {
+        const timerElement = document.getElementById("timer");
+        const interval = setInterval(() => {
+          if (timeLeft <= 0) {
+            clearInterval(interval);
+            alert("Time's up! Moving to the next round...");
+            fetch("/next-turn", { method: "POST" })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.message === "Game Over") {
+                  alert("Game Over! Thanks for playing.");
+                  location.href = "/";
+                } else {
+                  location.reload();
+                }
+              })
+              .catch((error) =>
+                alert(
+                  "An error occurred during turn transition: " + error.message
+                )
+              );
+          } else {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.innerText = `Time Left: ${minutes
+              .toString()
+              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+            timeLeft--;
+          }
+        }, 1000);
+      }
+
       function selectTicker(ticker) {
         selectedTicker = ticker;
         document.getElementById(
@@ -128,7 +164,6 @@
         updateTotal();
       }
 
-      // Function to update the total cost based on selected quantity
       function updateTotal() {
         const quantity = parseInt(
           document.getElementById("quantity").value,
@@ -141,7 +176,6 @@
         document.getElementById("total-price").innerText = total.toFixed(2);
       }
 
-      // Function to handle Buy or Sell actions
       function trade(action) {
         const quantity = parseInt(
           document.getElementById("quantity").value,
@@ -158,57 +192,35 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: "{{ username }}",
-            action: action,
+            action,
             ticker: selectedTicker,
-            quantity: quantity,
+            quantity,
           }),
         })
-          .then((response) => {
-            if (!response.ok) throw new Error("Failed to process trade.");
-            return response.json();
-          })
+          .then((response) => response.json())
           .then((data) => {
+            if (data.error) {
+              alert(data.error);
+              return;
+            }
             document.getElementById("capital").innerText = data.capital;
-            document.getElementById(`holdings-${selectedTicker}`).innerText =
-              data.holdings;
+            document.getElementById("portfolio").innerText = data.portfolio;
+            for (const ticker in data.holdings) {
+              holdings[ticker] = data.holdings[ticker];
+              document.getElementById(`holdings-${ticker}`).innerText =
+                holdings[ticker];
+            }
             updateTotal();
           })
           .catch((error) => alert("An error occurred: " + error.message));
       }
 
-      // Timer function
-      function startTimer() {
-        const timerElement = document.getElementById("timer");
-        let timeLeft = 105;
-        const interval = setInterval(() => {
-          if (timeLeft <= 0) {
-            clearInterval(interval);
-            alert("Time's up! Moving to the next round...");
-            fetch("/next-turn", { method: "POST" })
-              .then((response) => response.json())
-              .then((data) => {
-                if (data.message === "Game Over") {
-                  alert("Game Over! Thanks for playing.");
-                  location.href = "/";
-                } else {
-                  location.reload();
-                }
-              })
-              .catch((error) => alert("An error occurred: " + error.message));
-          } else {
-            timeLeft--;
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerElement.innerText = `Time Left: ${minutes
-              .toString()
-              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-          }
-        }, 1000);
-      }
-
-      // Initialize the page
       window.onload = () => {
-        startTimer();
+        startTimer(); // Start the timer when the page loads
+        for (const ticker in holdings) {
+          document.getElementById(`holdings-${ticker}`).innerText =
+            holdings[ticker];
+        }
         updateTotal();
       };
     </script>
