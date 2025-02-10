@@ -62,7 +62,7 @@
   </head>
   <body>
     <div class="center">
-      <p id="timer">Time Left: 00:15</p>
+      <p id="timer">Time Left: 01:00</p>
       <p>Turn: {{ turn }} / 10</p>
     </div>
     <div class="container">
@@ -122,7 +122,7 @@
 
       // Parse holdings from the server-side context
       let holdings = JSON.parse(`{{ holdings | tojson | safe }}`);
-      let timeLeft = 15; // Total time for each turn in seconds
+      let timeLeft = 60; // Total time for each turn in seconds
 
       function startTimer() {
         const timerElement = document.getElementById("timer");
