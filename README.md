@@ -162,7 +162,7 @@ Flask-SQLAlchemy
 
 ## **Contributors**
 
-- **You**: Faraz Shaikh
+- **Me**: Faraz Shaikh
 - **Partner**: Hassan Naeem
 
 ---
