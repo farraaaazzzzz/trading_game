@@ -29,6 +29,19 @@ class UserHoldings(db.Model):
     quantity = db.Column(db.Integer, default=0)
     user = db.relationship('User', backref=db.backref('holdings', lazy=True))
 
+HEADLINES = [
+    "MSFT announces record earnings, investors bullish! 🚀",
+    "AAPL unveils a revolutionary product, market reacts! 📱",
+    "GOOG faces government investigation over antitrust issues. ⚖️",
+    "TSLA launches new self-driving feature, stocks surge! 🚗",
+    "MSFT acquires OpenAI in a groundbreaking deal! 🤝",
+    "AAPL's latest financial report beats expectations! 💰",
+    "GOOG integrates next-gen AI into search engines! 🔍",
+    "TSLA develops innovative battery tech, competitors worry! 🔋",
+    "MSFT partners with top cloud providers for expansion! 📈",
+    "AAPL rumored to enter the electric vehicle market! 🚗"
+]
+
 # Game configuration: Fixed stock prices & hidden ROI percentages
 STOCK_PRICES = [
     {
@@ -157,6 +170,10 @@ def trade():
     stock_data = STOCK_PRICES[turn]
     user = User.query.filter_by(username=username).first()
     holdings = {holding.ticker: holding.quantity for holding in user.holdings}
+    
+    # Assign a different headline per turn
+    current_headline = HEADLINES[turn]  # Select one headline per turn
+
 
     # Calculate portfolio value
     portfolio_value = sum(
@@ -173,6 +190,7 @@ def trade():
         stock_data=stock_data,
         holdings=holdings,
         portfolio_value=portfolio_value,
+        headline=current_headline,  # Pass headline to frontend
         turn=turn + 1
     )
 

@@ -76,11 +76,11 @@
       </div>
       <div class="right">
         <div class="headline">
-          <p>{{ headline }}</p>
+          <h4 id="news-headline">{{ headline }}</h4>
         </div>
         <div>
-          <p>Capital: $<span id="capital">{{ capital }}</span></p>
-          <p>Portfolio: $<span id="portfolio">{{ portfolio_value }}</span></p>
+          <h4>Capital: $<span id="capital">{{ capital }}</span></h4>
+          <h4>Portfolio: $<span id="portfolio">{{ portfolio_value }}</span></h4>
         </div>
         <div class="ticker">
           {% for ticker, data in stock_data.items() %}
