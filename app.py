@@ -111,7 +111,10 @@ LOG_FILE = "trading_log.csv"
 if not os.path.exists(LOG_FILE):
     with open(LOG_FILE, "w", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow(["timestamp", "username", "turn", "action", "ticker", "quantity", "capital_before", "capital_after"])
+        writer.writerow(["timestamp", "username", "turn", "action", "ticker", "quantity","capital_before", "capital_after",
+            "cash_before", "cash_after",  # ✅ New cash tracking
+            "portfolio_before", "portfolio_after"  # ✅ New portfolio tracking
+        ])
         
 @app.cli.command("init-db")
 def init_db():
@@ -226,14 +229,16 @@ def action():
         print(f"[ERROR] User '{username}' not found!")  # Debugging log
         return jsonify({"error": "User not found"}), 400  
 
-    capital_before = user.capital
+    turn = session.get("turn", 0)
+    cash_before = session.get("cash", user.capital)  # ✅ Store cash before trade
+    stock_data = STOCK_PRICES[turn]  # ✅ Ensure stock data is correctly loaded
+
+    # ✅ Store portfolio before the trade
+    holdings = {h.ticker: h.quantity for h in user.holdings}  
+    portfolio_before = sum(holdings.get(t, 0) * stock_data[t]["price"] for t in stock_data)
 
     holding = UserHoldings.query.filter_by(user_id=user.id, ticker=ticker).first()
-    turn = session.get("turn", 0)  # ✅ Ensure 'turn' exists
-    stock = STOCK_PRICES[turn].get(ticker, {})
-    price = stock.get("price", 100)
-
-    cash = session.get("cash", user.capital)  # ✅ Ensure cash is properly retrieved
+    price = stock_data[ticker]["price"]
 
     if quantity <= 0:
         return jsonify({"error": "Invalid trade quantity"}), 400
@@ -242,31 +247,36 @@ def action():
 
     if action == "Buy":
         cost = price * quantity
-        if cash >= cost:
-            cash -= cost
+        if cash_before >= cost:
+            session["cash"] -= cost  # ✅ Deduct cash **before** updating holdings
             user.capital -= cost
+
             if holding:
-                holding.quantity += quantity
+                holding.quantity += quantity  # ✅ Ensure stock quantity updates
             else:
                 holding = UserHoldings(user_id=user.id, ticker=ticker, quantity=quantity)
                 db.session.add(holding)
+            
+            db.session.commit()  # ✅ Commit immediately after trade
         else:
             return jsonify({"error": "Insufficient cash"}), 400
+        
     elif action == "Sell":
         if holding and holding.quantity >= quantity:
-            cash += price * quantity
+            session["cash"] += price * quantity  # ✅ Add cash **before** updating holdings
             holding.quantity -= quantity
+            
+            db.session.commit()  # ✅ Commit immediately after trade
         else:
             return jsonify({"error": "Not enough shares to sell"}), 400
 
-    session["cash"] = cash
+    cash_after = session["cash"]  # ✅ Ensure cash update persists
 
-    # ✅ Calculate portfolio value
-    holdings = {h.ticker: h.quantity for h in user.holdings}
-    stock_data = STOCK_PRICES[turn]
-    portfolio_value = sum(holdings.get(ticker, 0) * stock_data[ticker]["price"] for ticker in stock_data)
+    # ✅ Re-fetch holdings AFTER commit
+    holdings = {h.ticker: h.quantity for h in user.holdings}  
+    portfolio_after = sum(holdings.get(t, 0) * stock_data[t]["price"] for t in stock_data)
 
-    user.capital = max(0, cash + portfolio_value)  # ✅ Prevent negative capital
+    user.capital = max(0, cash_after + portfolio_after)  # ✅ Ensure capital is correct
 
     try:
         db.session.commit()
@@ -278,19 +288,20 @@ def action():
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # ✅ Readable timestamp
     timestamp = f"{current_time} (Turn {turn + 1}: {game_timer})"
 
-    if user:
-        with open(LOG_FILE, "a", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow([
-                timestamp, username, turn + 1, action, ticker, quantity,
-                capital_before, user.capital, portfolio_value
-            ])
+    with open(LOG_FILE, "a", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow([
+            timestamp, username, turn + 1, action, ticker, quantity,
+            cash_before, cash_after,  # ✅ Cash values before/after
+            portfolio_before, portfolio_after,  # ✅ Portfolio before/after
+            user.capital  # ✅ Ensure final capital is logged correctly
+        ])
 
     return jsonify({
         "holdings": holdings,
         "capital": round(user.capital, 2),
-        "cash": round(cash, 2),
-        "portfolio": round(portfolio_value, 2)
+        "cash": round(cash_after, 2),
+        "portfolio": round(portfolio_after, 2)
     })
 
 @app.route("/next-turn", methods=["POST"])
@@ -298,39 +309,68 @@ def next_turn():
     username = session.get("username")
     if not username:
         return jsonify({"error": "Not logged in"}), 400
-    
+
     user = User.query.filter_by(username=username).first()
     if not user:
         return jsonify({"error": "User not found"}), 400
 
     turn = session.get("turn", 0)
+    
+    # ✅ Ensure we don't go beyond available turns
     if turn >= len(STOCK_PRICES) - 1:
-        return jsonify({"message": "Game Over"})  # If game has ended
+        return jsonify({"message": "Game Over"})
 
-    session["turn"] = session.get("turn", 0) + 1  # Ensure `turn` exists
-
-    stock_data = STOCK_PRICES[session["turn"]]  # Load new stock prices
+    # ✅ Store old portfolio & cash BEFORE updating turn
+    stock_data_old = STOCK_PRICES[turn]  # Old turn stock prices
     holdings = {h.ticker: h.quantity for h in user.holdings}
 
-    portfolio_value = sum(
-        holdings.get(ticker, 0) * stock_data[ticker]["price"]
-        for ticker in stock_data
+    portfolio_before = sum(
+        holdings.get(ticker, 0) * stock_data_old[ticker]["price"]
+        for ticker in stock_data_old
+    )
+    cash_before = session.get("cash", user.capital)  # ✅ Store cash correctly before turn change
+
+    # ✅ Move to the next turn
+    session["turn"] = turn + 1  
+
+    # ✅ Load new stock prices
+    stock_data_new = STOCK_PRICES[session["turn"]]  # New turn stock prices
+
+    # ✅ Calculate new portfolio value based on NEW prices
+    portfolio_after = sum(
+        holdings.get(ticker, 0) * stock_data_new[ticker]["price"]
+        for ticker in stock_data_new
     )
 
-    session["cash"] = max(0, session.get("cash", user.capital))  # Keep cash non-negative
-    user.capital = session["cash"] + portfolio_value  # Update total capital
-    
-    db.session.commit()
+    # ✅ Cash should NOT change unless a trade happens
+    cash_after = cash_before  
+
+    # ✅ Correctly update capital with the **NEW** portfolio value
+    capital_before = user.capital  
+    user.capital = cash_after + portfolio_after  # ✅ FIXED: Use updated portfolio value
+
+    # ✅ Debugging logs
+    print(f"\n[TURN {session['turn']}] ---------------------")
+    print(f"   - Cash Before: {cash_before}, Cash After: {cash_after}")
+    print(f"   - Portfolio Before: {portfolio_before}, Portfolio After: {portfolio_after}")
+    print(f"   - Capital Before: {capital_before}, Capital After: {user.capital}")
+
+    # ✅ Commit to database
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] Database commit failed: {e}")
+        return jsonify({"error": "Database error"}), 500
 
     return jsonify({
         "message": "Next turn started",
         "turn": session["turn"],
-        "capital": round(user.capital, 2),
-        "portfolio": round(portfolio_value, 2),
-        "cash": round(session.get("cash", 0), 2),
+        "capital": round(user.capital, 2),  # ✅ Now correctly reflects new portfolio
+        "portfolio": round(portfolio_after, 2),
+        "cash": round(cash_after, 2),
         "holdings": holdings
     })
-
 
 # Add the remaining function definitions (login, trade, action, etc.)
 if __name__ == "__main__":
