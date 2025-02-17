@@ -58,11 +58,19 @@
       .center p {
         font-weight: bold;
       }
+      .green {
+        color: green;
+        font-weight: bold;
+      }
+      .red {
+        color: red;
+        font-weight: bold;
+      }
     </style>
   </head>
   <body>
     <div class="center">
-      <p id="timer">Time Left: 01:00</p>
+      <p id="timer">Time Left: 00:45</p>
       <p>Turn: {{ turn }} / 10</p>
     </div>
     <div class="container">
@@ -79,8 +87,11 @@
           <h4 id="news-headline">{{ headline }}</h4>
         </div>
         <div>
-          <h4>Capital: $<span id="capital">{{ capital }}</span></h4>
-          <h4>Portfolio: $<span id="portfolio">{{ portfolio_value }}</span></h4>
+          <h4>Total Asset: $<span id="capital">{{ capital }}</span></h4>
+          <h4>
+            Stock Portfolio: $<span id="portfolio">{{ portfolio_value }}</span>
+          </h4>
+          <h4>Cash: $<span id="cash">{{ cash }}</span></h4>
         </div>
         <div class="ticker">
           {% for ticker, data in stock_data.items() %}
@@ -98,131 +109,203 @@
           id="quantity"
           value="1"
           min="1"
+          max="100000"
           oninput="updateTotal()"
         />
         <button onclick="trade('Sell')">Sell</button>
-
         <h3>Stock Holdings</h3>
         <table>
           <tr>
             <th>Stock</th>
             <th>Quantity Owned</th>
+            <th>Stock Value ($)</th>
           </tr>
           {% for ticker, data in stock_data.items() %}
           <tr>
             <td>{{ ticker }}</td>
             <td id="holdings-{{ ticker }}">{{ holdings.get(ticker, 0) }}</td>
+            <td
+              id="stock-value-{{ ticker }}"
+              class="stock-value"
+              data-ticker="{{ ticker }}"
+              data-prev-value="{{ last_turn_values.get(ticker, 0) }}"
+            >
+              {{ (holdings.get(ticker, 0) * data['price'])|round(2) }}
+            </td>
           </tr>
           {% endfor %}
         </table>
       </div>
     </div>
     <script>
-      let selectedTicker = "MSFT";
+        let selectedTicker = "MSFT";
+        // Parse holdings from the server-side context
+        let holdings = JSON.parse(`{{ holdings | tojson | safe }}`);
+        let timeLeft = 45; // Total time for each turn in seconds
 
-      // Parse holdings from the server-side context
-      let holdings = JSON.parse(`{{ holdings | tojson | safe }}`);
-      let timeLeft = 60; // Total time for each turn in seconds
+        function updateCapital(value) {
+          let safeValue = parseFloat(value) || 0; // 🔹 Ensure it's a number
+          document.getElementById("capital").innerText = safeValue.toFixed(2);
+        }
+        function updateStockValues() {
+          for (const ticker in holdings) {
+              let quantity = parseInt(document.getElementById(`holdings-${ticker}`).innerText, 10) || 0;
+              let priceElement = document.getElementById(`price-${ticker}`);
+              let valueElement = document.getElementById(`stock-value-${ticker}`);
 
-      function startTimer() {
-        const timerElement = document.getElementById("timer");
-        const interval = setInterval(() => {
-          if (timeLeft <= 0) {
-            clearInterval(interval);
-            alert("Time's up! Moving to the next round...");
-            fetch("/next-turn", { method: "POST" })
-              .then((response) => response.json())
-              .then((data) => {
-                if (data.message === "Game Over") {
-                  alert("Game Over! Thanks for playing.");
-                  location.href = "/";
-                } else {
-                  location.reload();
-                }
-              })
-              .catch((error) =>
-                alert(
-                  "An error occurred during turn transition: " + error.message
-                )
-              );
-          } else {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerElement.innerText = `Time Left: ${minutes
-              .toString()
-              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-            timeLeft--;
+              if (priceElement && valueElement) {
+                  let price = parseFloat(priceElement.innerText);
+                  let totalValue = quantity * price;
+                  let previousValue = parseFloat(valueElement.getAttribute("data-prev-value")) || 0;  // ✅ Fetch previous turn value
+
+                  // ✅ Apply color based on profit/loss
+                  if (totalValue > previousValue) {
+                      valueElement.style.color = "green";  // Profit
+                  } else if (totalValue < previousValue) {
+                      valueElement.style.color = "red";  // Loss
+                  } else {
+                      valueElement.style.color = "black";  // No change
+                  }
+
+                  valueElement.innerText = totalValue.toFixed(2);
+              }
           }
-        }, 1000);
       }
-
-      function selectTicker(ticker) {
-        selectedTicker = ticker;
-        document.getElementById(
-          "stock-image"
-        ).src = `/static/turn{{ turn }}/${ticker}.png`;
-        updateTotal();
-      }
-
-      function updateTotal() {
-        const quantity = parseInt(
-          document.getElementById("quantity").value,
-          10
-        );
-        const price = parseFloat(
-          document.getElementById(`price-${selectedTicker}`).innerText
-        );
-        const total = isNaN(quantity) || isNaN(price) ? 0 : quantity * price;
-        document.getElementById("total-price").innerText = total.toFixed(2);
-      }
-
-      function trade(action) {
-        const quantity = parseInt(
-          document.getElementById("quantity").value,
-          10
-        );
-
-        if (isNaN(quantity) || quantity <= 0) {
-          alert("Please enter a valid quantity greater than 0.");
-          return;
         }
+        function startTimer() {
+          const timerElement = document.getElementById("timer");
+          const interval = setInterval(() => {
+            if (timeLeft <= 0) {
+              clearInterval(interval);
+              fetch("/next-turn", { method: "POST" })
+                .then((response) => response.text()) // 🔹 First, read the response as text
+                .then((text) => {
+                  console.log("Server Response:", text); // 🔹 Debugging: Log full response
+                  return JSON.parse(text); // 🔹 Now try to parse as JSON
+                })
+                .then((data) => {
+                  if (data.message === "Game Over") {
+                    alert("Game Over! Thanks for playing.");
+                    location.href = "/";
+                  } else {
+                    // 🔹 Update UI immediately before reloading
+                    document.getElementById("capital").innerText =
+                      data.capital.toFixed(2);
+                    document.getElementById("portfolio").innerText =
+                      data.portfolio.toFixed(2);
+                    document.getElementById("cash").innerText =
+                      data.cash.toFixed(2);
+                    // Update Quantity Owned Table
+                    if (
+                      data.holdings &&
+                      data.holdings[selectedTicker] !== undefined
+                    ) {
+                      document.getElementById(
+                        `holdings-${selectedTicker}`
+                      ).innerText = data.holdings[selectedTicker];
+                    }
+                    alert("Next Turn Started!");
+                    setTimeout(() => location.reload(), 500); // 🔹 Short delay before reloading
+                  }
+                })
+                .catch((error) =>
+                  alert(
+                    "An error occurred during turn transition: " + error.message
+                  )
+                );
+            } else {
+              const minutes = Math.floor(timeLeft / 60);
+              const seconds = timeLeft % 60;
+              timerElement.innerText = `Time Left: ${minutes
+                .toString()
+                .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+              timeLeft--;
+            }
+          }, 1000);
+        }
+        function selectTicker(ticker) {
+          selectedTicker = ticker;
+          let turn = "{{ turn }}"; // Ensure it's properly converted to a string
+          document.getElementById(
+            "stock-image"
+          ).src = `/static/turn${turn}/${ticker}.png`;
+          updateTotal();
+        }
+        function trade(action) {
+          const quantity = parseInt(
+            document.getElementById("quantity").value,
+            10
+          );
 
-        fetch("/action", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "{{ username }}",
-            action,
-            ticker: selectedTicker,
-            quantity,
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.error) {
-              alert(data.error);
-              return;
-            }
-            document.getElementById("capital").innerText = data.capital;
-            document.getElementById("portfolio").innerText = data.portfolio;
-            for (const ticker in data.holdings) {
-              holdings[ticker] = data.holdings[ticker];
-              document.getElementById(`holdings-${ticker}`).innerText =
-                holdings[ticker];
-            }
-            updateTotal();
+          if (isNaN(quantity) || quantity <= 0) {
+            alert("Please enter a valid quantity.");
+            return;
+          }
+
+          const timerElement = document.getElementById("timer");
+          const gameTimer = timerElement
+            ? timerElement.innerText.replace("Time Left: ", "")
+            : "00:00";
+
+          fetch("/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: "{{ username }}",
+              action: action,
+              ticker: selectedTicker,
+              quantity: quantity,
+              game_timer: gameTimer,
+            }),
           })
-          .catch((error) => alert("An error occurred: " + error.message));
-      }
+            .then((response) => {
+              if (!response.ok) {
+                return response.text().then((text) => {
+                  throw new Error("Server Error: " + text);
+                });
+              }
+              return response.json();
+            })
+            .then((data) => {
+              if (data.error) {
+                alert("Error: " + data.error);
+                return;
+              }
+              updateStockValues();
+              updateCapital(data.capital);
+              document.getElementById("portfolio").innerText =
+                data.portfolio.toFixed(2);
+              document.getElementById("cash").innerText = data.cash.toFixed(2);
 
-      window.onload = () => {
-        startTimer(); // Start the timer when the page loads
-        for (const ticker in holdings) {
-          document.getElementById(`holdings-${ticker}`).innerText =
-            holdings[ticker];
+              // ✅ Update Holdings Table
+              if (data.holdings && data.holdings[selectedTicker] !== undefined) {
+                document.getElementById(`holdings-${selectedTicker}`).innerText =
+                  data.holdings[selectedTicker];
+              }
+
+              // ✅ Ensure Stock Value updates in real time
+              updateStockValues();
+            });
         }
-        updateTotal();
-      };
+        function updateTotal() {
+          const quantity = parseInt(
+            document.getElementById("quantity").value,
+            10
+          );
+          const price = parseFloat(
+            document.getElementById(`price-${selectedTicker}`).innerText
+          );
+          const total = isNaN(quantity) || isNaN(price) ? 0 : quantity * price;
+          document.getElementById("total-price").innerText = total.toFixed(2);
+        }
+
+        window.onload = function () {
+          startTimer();
+          let capitalValue =
+            parseFloat(document.getElementById("capital").innerText) || 0;
+          updateCapital(capitalValue); // ✅ Now it receives a valid number
+          updateTotal();
+        };
     </script>
   </body>
 </html>
