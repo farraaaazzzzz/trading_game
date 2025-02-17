@@ -202,8 +202,8 @@ def trade():
         holdings=holdings,
         portfolio_value=portfolio_value,
         headline=current_headline,  # Pass headline to frontend
-        turn=turn + 1,
-        last_turn_values=last_turn_values  # ✅ Pass last turn values
+        last_turn_values=last_turn_values,  # ✅ Pass last turn values
+        turn=turn + 1   
     )
 
 @app.route("/action", methods=["POST"])
