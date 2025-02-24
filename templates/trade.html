@@ -77,7 +77,7 @@
       <div class="left">
         <img
           id="stock-image"
-          src="{{ stock_data['MSFT']['image'] }}"
+          src="{{ stock_data['TSLA']['image'] }}"
           alt="Stock Image"
           width="100%"
         />
@@ -138,7 +138,7 @@
       </div>
     </div>
     <script>
-      let selectedTicker = "MSFT";
+      let selectedTicker = "TSLA";
       // Parse holdings from the server-side context
       let holdings = JSON.parse(`{{ holdings | tojson | safe }}`);
       let timeLeft = 45; // Total time for each turn in seconds
@@ -147,33 +147,52 @@
         let safeValue = parseFloat(value) || 0; // 🔹 Ensure it's a number
         document.getElementById("capital").innerText = safeValue.toFixed(2);
       }
+      function cleanHoldings() {
+        // Get available tickers from `stock_data`
+        let availableTickers = JSON.parse(`{{ stock_data | tojson | safe }}`);
+
+        // Remove old tickers from `holdings`
+        Object.keys(holdings).forEach((ticker) => {
+          if (!availableTickers[ticker]) {
+            delete holdings[ticker]; // ✅ Remove invalid ticker from holdings
+          }
+        });
+      }
       function updateStockValues() {
+        // Fetch available tickers from the page's stock_data
+        let availableTickers = JSON.parse(`{{ stock_data | tojson | safe }}`);
+
         for (const ticker in holdings) {
-          let quantity =
-            parseInt(
-              document.getElementById(`holdings-${ticker}`).innerText,
-              10
-            ) || 0;
+          if (!availableTickers[ticker]) {
+            console.warn(`Skipping old ticker: ${ticker}`); // Debugging: Only warn for old tickers
+            continue; // Skip tickers that are not part of stock_data
+          }
+
+          let holdingsElement = document.getElementById(`holdings-${ticker}`);
           let priceElement = document.getElementById(`price-${ticker}`);
           let valueElement = document.getElementById(`stock-value-${ticker}`);
 
-          if (priceElement && valueElement) {
-            let price = parseFloat(priceElement.innerText);
-            let totalValue = quantity * price;
-            let previousValue =
-              parseFloat(valueElement.getAttribute("data-prev-value")) || 0; // ✅ Fetch previous turn value
-
-            // ✅ Apply color based on profit/loss
-            if (totalValue > previousValue) {
-              valueElement.style.color = "green"; // Profit
-            } else if (totalValue < previousValue) {
-              valueElement.style.color = "red"; // Loss
-            } else {
-              valueElement.style.color = "black"; // No change
-            }
-
-            valueElement.innerText = totalValue.toFixed(2);
+          if (!holdingsElement || !priceElement || !valueElement) {
+            console.warn(`Missing elements for ticker: ${ticker}`);
+            continue; // Skip missing elements
           }
+
+          let quantity = parseInt(holdingsElement.innerText, 10) || 0;
+          let price = parseFloat(priceElement.innerText);
+          let totalValue = quantity * price;
+          let previousValue =
+            parseFloat(valueElement.getAttribute("data-prev-value")) || 0;
+
+          // ✅ Ensure color coding for stock value
+          if (totalValue > previousValue) {
+            valueElement.style.color = "green";
+          } else if (totalValue < previousValue) {
+            valueElement.style.color = "red";
+          } else {
+            valueElement.style.color = "black";
+          }
+
+          valueElement.innerText = totalValue.toFixed(2);
         }
       }
       function startTimer() {
@@ -262,19 +281,20 @@
             game_timer: gameTimer,
           }),
         })
-          .then((response) => {
-            if (!response.ok) {
-              return response.text().then((text) => {
-                throw new Error("Server Error: " + text);
-              });
-            }
-            return response.json();
-          })
+          .then((response) =>
+            response.json().then((data) => {
+              if (!response.ok) {
+                throw new Error(data.error || "An unknown error occurred.");
+              }
+              return data;
+            })
+          )
           .then((data) => {
             if (data.error) {
-              alert("Error: " + data.error);
+              alert("Error: " + data.error); // ✅ Show alert for errors
               return;
             }
+
             updateStockValues();
             updateCapital(data.capital);
             document.getElementById("portfolio").innerText =
@@ -287,8 +307,10 @@
                 data.holdings[selectedTicker];
             }
 
-            // ✅ Ensure Stock Value updates in real time
-            updateStockValues();
+            updateStockValues(); // ✅ Ensure stock values update after trade
+          })
+          .catch((error) => {
+            alert("Trade Error: " + error.message); // ✅ Show alert for failed transactions
           });
       }
       function updateTotal() {
@@ -304,6 +326,7 @@
       }
 
       window.onload = function () {
+        cleanHoldings();
         startTimer();
         updateStockValues();
         let capitalValue =
