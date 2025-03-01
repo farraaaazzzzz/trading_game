@@ -30,79 +30,44 @@ class UserHoldings(db.Model):
     user = db.relationship('User', backref=db.backref('holdings', lazy=True))
 
 HEADLINES = [
-    "TSLA announces record earnings, investors bullish! 🚀",
-    "XOM unveils a revolutionary product, market reacts! 📱",
-    "NFLX faces government investigation over antitrust issues. ⚖️",
-    "PG launches new self-driving feature, stocks surge! 🚗",
-    "TSLA acquires OpenAI in a groundbreaking deal! 🤝",
-    "XOM's latest financial report beats expectations! 💰",
-    "NFLX integrates next-gen AI into search engines! 🔍",
-    "PG develops innovative battery tech, competitors worry! 🔋",
-    "TSLA partners with top cloud providers for expansion! 📈",
-    "XOM rumored to enter the electric vehicle market! 🚗"
+    "Elon Musk's $5 Billion Tesla Stock Sale Raises Eyebrows.\nExxonMobil Announces FID for Mega China Petchem Project.\n.\n.",
+    "Netflix Faces Surge in Phishing Attacks: Over 50% of Users were Targeted.\nP&G's Acquisition of Farmacy Beauty Strengthens Skincare Portfolio and Appeals to Younger Consumers.",
+    "ExxonMobil's $25 Billion Annual Investment Plan Through Next 5 years Sparks Investor Optimism Amid Rising Oil Prices.\nNetflix Dominates Streaming Market with Over 210 Million Subscribers, Outpacing Disney+ by More Than 100 Million.",
+    "Tesla Faked Original Full Self-Driving Video, Former Employees Allege.\nProcter & Gamble is unlikely to repeat its stellar performance of recent years, however, it is an excellent wealth preservation vehicle.",
+    "Hyundai Ioniq 5 Emerges as Strong Competitor, Posing Threat to Tesla's Market Share in EV Segment.\nNetflix Planning to change their No-Ad Strategy Amid Slowing Subscriber Growth, Analyst Warns.",
 ]
 
 # Game configuration: Fixed stock prices & hidden ROI percentages
 STOCK_PRICES = [
     {
-        "TSLA": {"price": 100, "image": "/static/turn1/TSLA.png", "roi": 0.01},
-        "XOM": {"price": 100, "image": "/static/turn1/XOM.png", "roi": 1.1},
-        "NFLX": {"price": 150, "image": "/static/turn1/NFLX.png", "roi": 1.02},
-        "PG": {"price": 200, "image": "/static/turn1/PG.png", "roi": 0.40},
+        "TSLA": {"price": 337.8, "image": "/static/turn1/TSLA.png", "roi": 1.101243339},
+        "XOM": {"price": 64.37, "image": "/static/turn1/XOM.png", "roi": 0.986173683},
+        "NFLX": {"price": 679.33, "image": "/static/turn1/NFLX.png", "roi": 0.969028307},
+        "PG": {"price": 147.4, "image": "/static/turn1/PG.png", "roi": 1.008548168},
     },
     {
-        "TSLA": {"price": 1, "image": "/static/turn2/TSLA.png", "roi": 9900},
-        "XOM": {"price": 110, "image": "/static/turn2/XOM.png", "roi": 1.1},
-        "NFLX": {"price": 140, "image": "/static/turn2/NFLX.png", "roi": 0.6},
-        "PG": {"price": 210, "image": "/static/turn2/PG.png", "roi": 2.4},
+        "TSLA": {"price": 372, "image": "/static/turn2/TSLA.png", "roi": 0.904139785},
+        "XOM": {"price": 63.48, "image": "/static/turn2/XOM.png", "roi": 0.970069313},
+        "NFLX": {"price": 658.29, "image": "/static/turn2/NFLX.png", "roi": 0.930729618},
+        "PG": {"price": 148.66, "image": "/static/turn2/PG.png", "roi": 1.023476389},
     },
     {
-        "TSLA": {"price": 100, "image": "/static/turn3/TSLA.png", "roi": 0.01},
-        "XOM": {"price": 121, "image": "/static/turn3/XOM.png", "roi": 1.1},
-        "NFLX": {"price": 140, "image": "/static/turn3/NFLX.png", "roi": 0.02},
-        "PG": {"price": 210, "image": "/static/turn3/PG.png", "roi": 1.08},
+        "TSLA": {"price": 336.34, "image": "/static/turn3/TSLA.png", "roi": 0.967265267},
+        "XOM": {"price": 61.58, "image": "/static/turn3/XOM.png", "roi": 0.994965898},
+        "NFLX": {"price": 612.69, "image": "/static/turn3/NFLX.png", "roi": 0.987514077},
+        "PG": {"price": 152.15, "image": "/static/turn3/PG.png", "roi": 1.044101216},
     },
     {
-        "TSLA": {"price": 1, "image": "/static/turn4/TSLA.png", "roi": 9900},
-        "XOM": {"price": 133.1, "image": "/static/turn4/XOM.png", "roi": 1.1},
-        "NFLX": {"price": 140, "image": "/static/turn4/NFLX.png", "roi": 4.3},
-        "PG": {"price": 210, "image": "/static/turn4/PG.png", "roi": 1.08},
+        "TSLA": {"price": 325.33, "image": "/static/turn4/TSLA.png", "roi": 1.120861894},
+        "XOM": {"price": 61.27, "image": "/static/turn4/XOM.png", "roi": 1.010119145},
+        "NFLX": {"price": 605.04, "image": "/static/turn4/NFLX.png", "roi": 1.013354489},
+        "PG": {"price": 158.86, "image": "/static/turn4/PG.png", "roi": 1.019576986},
     },
     {
-        "TSLA": {"price": 100, "image": "/static/turn5/TSLA.png", "roi": 0.9},
-        "XOM": {"price": 146.41, "image": "/static/turn5/XOM.png", "roi": 1.1},
-        "NFLX": {"price": 140, "image": "/static/turn5/NFLX.png", "roi": 2.9},
-        "PG": {"price": 210, "image": "/static/turn5/PG.png", "roi": 1.38},
-    },
-    {
-        "TSLA": {"price": 0, "image": "/static/turn6/TSLA.png", "roi": 0.9},
-        "XOM": {"price": 161.051, "image": "/static/turn6/XOM.png", "roi": 1.1},
-        "NFLX": {"price": 140, "image": "/static/turn6/NFLX.png", "roi": 0.65},
-        "PG": {"price": 210, "image": "/static/turn6/PG.png", "roi": 0.8},
-    },
-    {
-        "TSLA": {"price": 53.1441, "image": "/static/turn7/TSLA.png", "roi": 0.9},
-        "XOM": {"price": 177.1561, "image": "/static/turn7/XOM.png", "roi": 1.1},
-        "NFLX": {"price": 140, "image": "/static/turn7/NFLX.png", "roi": 1.03},
-        "PG": {"price": 210, "image": "/static/turn7/PG.png", "roi": 1.08},
-    },
-    {
-        "TSLA": {"price": 47.82969, "image": "/static/turn8/TSLA.png", "roi": 0.9},
-        "XOM": {"price": 194.87171, "image": "/static/turn8/XOM.png", "roi": 1.1},
-        "NFLX": {"price": 140, "image": "/static/turn8/NFLX.png", "roi": 1.03},
-        "PG": {"price": 210, "image": "/static/turn8/PG.png", "roi": 1.08},
-    },
-    {
-        "TSLA": {"price": 43.046, "image": "/static/turn9/TSLA.png", "roi": 0.9},
-        "XOM": {"price": 171, "image": "/static/turn9/XOM.png", "roi": 1.1},
-        "NFLX": {"price": 140, "image": "/static/turn9/NFLX.png", "roi": 9.13},
-        "PG": {"price": 210, "image": "/static/turn9/PG.png", "roi": 1.2},
-    },
-    {
-        "TSLA": {"price": 10, "image": "/static/turn10/TSLA.png", "roi": 0.9},
-        "XOM": {"price": 130, "image": "/static/turn10/XOM.png", "roi": 1.1},
-        "NFLX": {"price": 140, "image": "/static/turn10/NFLX.png", "roi": 0.05},
-        "PG": {"price": 210, "image": "/static/turn10/PG.png", "roi": 0.02},
+        "TSLA": {"price": 364.65, "image": "/static/turn5/TSLA.png", "roi": 0.99467983},
+        "XOM": {"price": 61.89, "image": "/static/turn5/XOM.png", "roi": 1.078526418},
+        "NFLX": {"price": 613.12, "image": "/static/turn5/NFLX.png", "roi": 0.925626305},
+        "PG": {"price": 161.97, "image": "/static/turn5/PG.png", "roi": 1.013829722},
     },
 ]
 
@@ -136,7 +101,6 @@ def login():
     if user and user.password == password:
         # Reset user capital
         user.capital = 100000.0
-
         # Reset user holdings
         existing_holdings = UserHoldings.query.filter_by(user_id=user.id).all()
         for holding in existing_holdings:
@@ -171,7 +135,7 @@ def trade():
     
     turn = session.get("turn", 0)
     if turn >= len(STOCK_PRICES):
-        return jsonify({"message": "Game Over"})
+        return jsonify({"message": "Game Over"}), 400
     
     stock_data = STOCK_PRICES[turn]
     user = User.query.filter_by(username=username).first()

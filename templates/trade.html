@@ -70,8 +70,8 @@
   </head>
   <body>
     <div class="center">
-      <p id="timer">Time Left: 00:45</p>
-      <p>Turn: {{ turn }} / 10</p>
+      <p id="timer">Time Left: 00:20</p>
+      <p>Turn: {{ turn }} / 5</p>
     </div>
     <div class="container">
       <div class="left">
@@ -79,12 +79,14 @@
           id="stock-image"
           src="{{ stock_data['TSLA']['image'] }}"
           alt="Stock Image"
-          width="100%"
+          width="110%"
         />
       </div>
       <div class="right">
         <div class="headline">
-          <h4 id="news-headline">{{ headline }}</h4>
+          <h4 id="news-headline">
+            {{ headline | replace("\n", "<br />") | safe }}
+          </h4>
         </div>
         <div>
           <h4>Total Asset: $<span id="capital">{{ capital }}</span></h4>
@@ -141,7 +143,7 @@
       let selectedTicker = "TSLA";
       // Parse holdings from the server-side context
       let holdings = JSON.parse(`{{ holdings | tojson | safe }}`);
-      let timeLeft = 45; // Total time for each turn in seconds
+      let timeLeft = 20; // Total time for each turn in seconds
 
       function updateCapital(value) {
         let safeValue = parseFloat(value) || 0; // 🔹 Ensure it's a number
