@@ -30,12 +30,12 @@ class UserHoldings(db.Model):
     user = db.relationship('User', backref=db.backref('holdings', lazy=True))
 
 HEADLINES = [
-    "Elon Musk's $5 Billion Tesla Stock Sale Raises Eyebrows.\nExxonMobil Announces FID for Mega China Petchem Project.\n.\n.",
-    "Netflix Faces Surge in Phishing Attacks: Over 50% of Users were Targeted.\nP&G's Acquisition of Farmacy Beauty Strengthens Skincare Portfolio and Appeals to Younger Consumers.",
-    "ExxonMobil's $25 Billion Annual Investment Plan Through Next 5 years Sparks Investor Optimism Amid Rising Oil Prices.\nNetflix Dominates Streaming Market with Over 210 Million Subscribers, Outpacing Disney+ by More Than 100 Million.",
-    "Tesla Faked Original Full Self-Driving Video, Former Employees Allege.\nProcter & Gamble is unlikely to repeat its stellar performance of recent years, however, it is an excellent wealth preservation vehicle.",
-    "Hyundai Ioniq 5 Emerges as Strong Competitor, Posing Threat to Tesla's Market Share in EV Segment.\nNetflix Planning to change their No-Ad Strategy Amid Slowing Subscriber Growth, Analyst Warns.",
-]
+    "'Elon Musk's $5 Billion Tesla Stock Sale Raises Eyebrows.'\n\n\n'ExxonMobil Announces FID for Mega China Petchem Project.'\n\n\n",
+    "'Netflix Faces Surge in Phishing Attacks: Over 50% of Users were Targeted.'\n\n\n'P&G's Acquisition of Farmacy Beauty Strengthens Skincare Portfolio and Appeals to Younger Consumers.'\n\n",
+    "'ExxonMobil's $25 Billion Annual Investment Plan Through Next 5 years Sparks Investor Optimism Amid Rising Oil Prices.'\n\n'Netflix Dominates Streaming Market with Over 210 Million Subscribers, Outpacing Disney+ by More Than 100 Million.'\n\n",
+    "'Tesla Faked Original Full Self-Driving Video, Former Employees Allege.'\n\n\n'Procter & Gamble is unlikely to repeat its stellar performance of recent years, however, it is an excellent wealth preservation vehicle.'\n\n",
+    "'Hyundai Ioniq 5 Emerges as Strong Competitor, Posing Threat to Tesla's Market Share in EV Segment.'\n\n'Netflix Planning to change their No-Ad Strategy Amid Slowing Subscriber Growth, Analyst Warns.'\n\n",
+    ]
 
 # Game configuration: Fixed stock prices & hidden ROI percentages
 STOCK_PRICES = [
@@ -78,17 +78,51 @@ if not os.path.exists(LOG_FILE):
         writer = csv.writer(file)
         writer.writerow(["timestamp", "username", "turn", "action", "ticker", "quantity","capital_before", "capital_after",
             "cash_before", "cash_after",  # ✅ New cash tracking
-            "portfolio_before", "portfolio_after"  # ✅ New portfolio tracking
+            "portfolio_before", "portfolio_after", "Total_assets"  # ✅ New portfolio tracking
         ])
-        
+
 @app.cli.command("init-db")
 def init_db():
     with app.app_context():
         db.create_all()
-        if not User.query.first():
-            db.session.add(User(username="user1", password="password1"))
-            db.session.commit()
-    print("Database initialized.")
+        # Add multiple users with predefined usernames and passwords
+        users = [
+            {"username": "E5401", "password": "E5401"},
+            {"username": "E9302", "password": "E9302"},
+            {"username": "E5303", "password": "E5303"},
+            {"username": "E4204", "password": "E4204"},
+            {"username": "E9505", "password": "E9505"},
+            {"username": "E8006", "password": "E8006"},
+            {"username": "E4007", "password": "E4007"},
+            {"username": "E2308", "password": "E2308"},
+            {"username": "E3009", "password": "E3009"},
+            {"username": "E9610", "password": "E9610"},
+            {"username": "E2711", "password": "E2711"},
+            {"username": "E6612", "password": "E6612"},
+            {"username": "E7513", "password": "E7513"},
+            {"username": "E8914", "password": "E8914"},
+            {"username": "E6715", "password": "E6715"},
+            {"username": "N8201", "password": "N8201"},
+            {"username": "N7802", "password": "N7802"},
+            {"username": "N7903", "password": "N7903"},
+            {"username": "N1104", "password": "N1104"},
+            {"username": "N4905", "password": "N4905"},
+            {"username": "N4406", "password": "N4406"},
+            {"username": "N5107", "password": "N5107"},
+            {"username": "N1008", "password": "N1008"},
+            {"username": "N5809", "password": "N5809"},
+            {"username": "N2510", "password": "N2510"},
+            {"username": "N3111", "password": "N3111"},
+            {"username": "N3512", "password": "N3512"},
+            {"username": "N1913", "password": "N1913"},
+            {"username": "N9214", "password": "N9214"},
+            {"username": "N9715", "password": "N9715"}
+        ]
+        for user_data in users:
+            if not User.query.filter_by(username=user_data["username"]).first():
+                db.session.add(User(**user_data))
+        db.session.commit()
+        print("Database initialized with multiple users.")
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -112,8 +146,8 @@ def login():
         with open(LOG_FILE, "w", newline="") as file:
             writer = csv.writer(file)
             writer.writerow([
-                "timestamp", "username", "turn", "action", "ticker",
-                "quantity", "capital_before", "capital_after", "portfolio_value"
+                "timestamp", "username", "turn", "action", "ticker", "quantity","cash_before", "cash_after",  # ✅ New cash tracking
+                "stockportfolio_before", "stockportfolio_after", "Total_assets"  # ✅ New portfolio tracking
             ])
 
 

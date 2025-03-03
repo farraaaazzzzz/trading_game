@@ -16,10 +16,20 @@
       }
       .left,
       .right {
-        width: 45%;
+        width: 46%;
+      }
+      h4 {
+        margin: 2px 0;
+        line-height: 2;
+      }
+      .total,
+      .headline,
+      .center p {
+        margin: 2px 0;
       }
       .headline {
-        font-size: 20px;
+        margin-top: 10px;
+        font-size: 22px;
         font-weight: bold;
       }
       .ticker button {
@@ -31,9 +41,7 @@
         font-weight: bold;
       }
       .total {
-        margin-top: 10px;
-        margin-bottom: 10px;
-        font-size: 18px;
+        font-size: 15px;
         font-weight: bold;
       }
       table {
@@ -49,7 +57,7 @@
         text-align: center;
       }
       th {
-        background-color: #f2f2f2;
+        background-color: rgb(238, 238, 238);
       }
       .center {
         text-align: center;
@@ -84,9 +92,9 @@
       </div>
       <div class="right">
         <div class="headline">
-          <h4 id="news-headline">
+          <h5 id="news-headline">
             {{ headline | replace("\n", "<br />") | safe }}
-          </h4>
+          </h5>
         </div>
         <div>
           <h4>Total Asset: $<span id="capital">{{ capital }}</span></h4>
@@ -104,7 +112,9 @@
           </button>
           {% endfor %}
         </div>
-        <div class="total">Total: $<span id="total-price">0.00</span></div>
+        <div class="total">
+          <h4>Total: $<span id="total-price">0.00</span></h4>
+        </div>
         <button onclick="trade('Buy')">Buy</button>
         <input
           type="number"
