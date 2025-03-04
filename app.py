@@ -19,7 +19,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
-    capital = db.Column(db.Float, default=100000.0)
+    capital = db.Column(db.Float, default=10000.0)
 
 # User holdings model
 class UserHoldings(db.Model):
@@ -73,14 +73,15 @@ STOCK_PRICES = [
 
 # Initialize CSV for trade logs
 LOG_FILE = "trading_log.csv"
+TICKERS = ["TSLA", "XOM", "NFLX", "PG"]  # Add all ticker symbols here
 if not os.path.exists(LOG_FILE):
     with open(LOG_FILE, "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["timestamp", "username", "turn", "action", "ticker", "quantity","capital_before", "capital_after",
             "cash_before", "cash_after",  # ✅ New cash tracking
             "portfolio_before", "portfolio_after", "Total_assets"  # ✅ New portfolio tracking
-        ])
-
+        ] + [f"total_{ticker}_holding" for ticker in TICKERS] + [f"{ticker}_value" for ticker in TICKERS]
+        )
 @app.cli.command("init-db")
 def init_db():
     with app.app_context():
@@ -134,7 +135,7 @@ def login():
 
     if user and user.password == password:
         # Reset user capital
-        user.capital = 100000.0
+        user.capital = 10000.0
         # Reset user holdings
         existing_holdings = UserHoldings.query.filter_by(user_id=user.id).all()
         for holding in existing_holdings:
@@ -148,7 +149,7 @@ def login():
             writer.writerow([
                 "timestamp", "username", "turn", "action", "ticker", "quantity","cash_before", "cash_after",  # ✅ New cash tracking
                 "stockportfolio_before", "stockportfolio_after", "Total_assets"  # ✅ New portfolio tracking
-            ])
+            ]+ [f"total_{ticker}_holding" for ticker in TICKERS])  # Add columns for cumulative holdings
 
 
         session["username"] = username
@@ -235,6 +236,7 @@ def action():
     holdings = {h.ticker: h.quantity for h in user.holdings}  
     portfolio_before = sum(holdings.get(t, 0) * stock_data[t]["price"] for t in stock_data)
 
+    holding = UserHoldings.query.filter_by(user_id=user.id, ticker=ticker).first()
     price = stock_data[ticker]["price"]
 
     holding = UserHoldings.query.filter_by(user_id=user.id, ticker=ticker).first()
@@ -245,7 +247,7 @@ def action():
 
     if quantity <= 0:
         return jsonify({"error": "Invalid trade quantity"}), 400
-    if quantity > 100000:
+    if quantity > 10000:
         return jsonify({"error": "Trade size too large"}), 400
 
     if action == "Buy":
@@ -278,6 +280,10 @@ def action():
     # ✅ Re-fetch holdings AFTER commit
     holdings = {h.ticker: h.quantity for h in user.holdings}  
     portfolio_after = sum(holdings.get(t, 0) * stock_data[t]["price"] for t in stock_data)
+    user.capital = max(0, cash_after + portfolio_after)
+    
+    # Calculate total holdings (sum of all stock quantities)
+    total_holdings = sum(holdings.values())
 
     user.capital = max(0, cash_after + portfolio_after)  # ✅ Ensure capital is correct
 
@@ -290,6 +296,10 @@ def action():
 
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # ✅ Readable timestamp
     timestamp = f"{current_time} (Turn {turn + 1}: {game_timer})"
+    
+    # Prepare cumulative holdings data for each ticker
+    total_holdings = [holdings.get(ticker, 0) for ticker in TICKERS]
+    stock_values = [holdings.get(ticker, 0) * stock_data[ticker]["price"] for ticker in TICKERS]
 
     with open(LOG_FILE, "a", newline="") as file:
         writer = csv.writer(file)
@@ -297,8 +307,8 @@ def action():
             timestamp, username, turn + 1, action, ticker, quantity,
             cash_before, cash_after,  # ✅ Cash values before/after
             portfolio_before, portfolio_after,  # ✅ Portfolio before/after
-            user.capital  # ✅ Ensure final capital is logged correctly
-        ])
+            user.capital,  # ✅ Ensure final capital is logged correctly
+        ] + total_holdings + stock_values)  
 
     return jsonify({
         "holdings": holdings,
