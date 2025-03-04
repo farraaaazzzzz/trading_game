@@ -149,7 +149,7 @@ def login():
             writer.writerow([
                 "timestamp", "username", "turn", "action", "ticker", "quantity","cash_before", "cash_after",  # ✅ New cash tracking
                 "stockportfolio_before", "stockportfolio_after", "Total_assets"  # ✅ New portfolio tracking
-            ]+ [f"total_{ticker}_holding" for ticker in TICKERS])  # Add columns for cumulative holdings
+            ]+ [f"total_{ticker}_holding" for ticker in TICKERS] + [f"{ticker}_value" for ticker in TICKERS])  # Add columns for cumulative holdings
 
 
         session["username"] = username
