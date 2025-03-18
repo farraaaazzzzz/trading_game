@@ -213,35 +213,42 @@
           if (timeLeft <= 0) {
             clearInterval(interval);
             fetch("/next-turn", { method: "POST" })
-              .then((response) => response.text()) // 🔹 First, read the response as text
-              .then((text) => {
-                console.log("Server Response:", text); // 🔹 Debugging: Log full response
-                return JSON.parse(text); // 🔹 Now try to parse as JSON
-              })
+              .then((response) => response.json()) // ✅ Ensure response is parsed properly
               .then((data) => {
-                if (data.message === "Game Over") {
-                  alert("Game Over! Thanks for playing.");
-                  location.href = "/";
-                } else {
-                  // 🔹 Update UI immediately before reloading
-                  document.getElementById("capital").innerText =
-                    data.capital.toFixed(2);
-                  document.getElementById("portfolio").innerText =
-                    data.portfolio.toFixed(2);
-                  document.getElementById("cash").innerText =
-                    data.cash.toFixed(2);
-                  // Update Quantity Owned Table
-                  if (
-                    data.holdings &&
-                    data.holdings[selectedTicker] !== undefined
-                  ) {
-                    document.getElementById(
-                      `holdings-${selectedTicker}`
-                    ).innerText = data.holdings[selectedTicker];
-                  }
-                  alert("Next Turn Started!");
-                  setTimeout(() => location.reload(), 500); // 🔹 Short delay before reloading
+                console.log("Server Response:", data); // 🔹 Debugging: Log full response
+
+                if (data.message.includes("Game Over")) {
+                  alert("Game Over! Logs exported. Redirecting to homepage...");
+                  setTimeout(() => {
+                    fetch("/logout", { method: "POST" }) // ✅ Ensure session is cleared
+                      .then(() => (location.href = "/")); // ✅ Redirect to homepage
+                  }, 1000);
+                  return;
                 }
+
+                // ✅ Ensure safe default values
+                document.getElementById("capital").innerText = data.capital
+                  ? data.capital.toFixed(2)
+                  : "0.00";
+                document.getElementById("portfolio").innerText = data.portfolio
+                  ? data.portfolio.toFixed(2)
+                  : "0.00";
+                document.getElementById("cash").innerText = data.cash
+                  ? data.cash.toFixed(2)
+                  : "0.00";
+
+                // ✅ Update Quantity Owned Table
+                if (data.holdings) {
+                  Object.keys(data.holdings).forEach((ticker) => {
+                    let element = document.getElementById(`holdings-${ticker}`);
+                    if (element) {
+                      element.innerText = data.holdings[ticker];
+                    }
+                  });
+                }
+
+                alert("Next Turn Started!");
+                setTimeout(() => location.reload(), 500); // ✅ Short delay before reloading
               })
               .catch((error) =>
                 alert(
@@ -258,6 +265,7 @@
           }
         }, 1000);
       }
+
       function selectTicker(ticker) {
         selectedTicker = ticker;
         let turn = "{{ turn }}"; // Ensure it's properly converted to a string
@@ -303,15 +311,19 @@
           )
           .then((data) => {
             if (data.error) {
-              alert("Error: " + data.error); // ✅ Show alert for errors
+              alert("Error: " + data.error);
               return;
             }
 
             updateStockValues();
             updateCapital(data.capital);
-            document.getElementById("portfolio").innerText =
-              data.portfolio.toFixed(2);
-            document.getElementById("cash").innerText = data.cash.toFixed(2);
+
+            document.getElementById("portfolio").innerText = data.portfolio
+              ? data.portfolio.toFixed(2)
+              : "0.00";
+            document.getElementById("cash").innerText = data.cash
+              ? data.cash.toFixed(2)
+              : "0.00";
 
             // ✅ Update Holdings Table
             if (data.holdings && data.holdings[selectedTicker] !== undefined) {
@@ -321,6 +333,7 @@
 
             updateStockValues(); // ✅ Ensure stock values update after trade
           })
+
           .catch((error) => {
             alert("Trade Error: " + error.message); // ✅ Show alert for failed transactions
           });

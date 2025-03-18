@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
+import pandas as pd
 import os
 import csv
 from datetime import datetime
@@ -35,7 +36,7 @@ HEADLINES = [
     "'ExxonMobil's $25 Billion Annual Investment Plan Through Next 5 years Sparks Investor Optimism Amid Rising Oil Prices.'\n\n'Netflix Dominates Streaming Market with Over 210 Million Subscribers, Outpacing Disney+ by More Than 100 Million.'\n\n",
     "'Tesla Faked Original Full Self-Driving Video, Former Employees Allege.'\n\n\n'Procter & Gamble is unlikely to repeat its stellar performance of recent years, however, it is an excellent wealth preservation vehicle.'\n\n",
     "'Hyundai Ioniq 5 Emerges as Strong Competitor, Posing Threat to Tesla's Market Share in EV Segment.'\n\n'Netflix Planning to change their No-Ad Strategy Amid Slowing Subscriber Growth, Analyst Warns.'\n\n",
-    "'Sell All the Shares of the Stocks you Own.'\n\n\n\n\n",
+    "'Sell All the Shares of the Stocks you Own.'\n\n\n\n\n\n\n",
     ]
 
 # Game configuration: Fixed stock prices & hidden ROI percentages
@@ -323,6 +324,34 @@ def action():
         "cash": round(cash_after, 2),
         "portfolio": round(portfolio_after, 2)
     })
+    
+# ✅ Ensure an 'exports' directory exists
+EXPORTS_DIR = "exports"
+os.makedirs(EXPORTS_DIR, exist_ok=True)
+
+# ✅ Function to export user-specific trading log
+def export_user_log(username):
+    try:
+        df = pd.read_csv(LOG_FILE)
+
+        if df.empty:
+            print(f"[WARNING] No trades found for {username}, nothing to export.")
+            return
+
+        user_df = df[df["username"] == username]  # ✅ Filter user's trades only
+
+        if user_df.empty:
+            print(f"[WARNING] {username} has no trades recorded.")
+            return
+
+        user_log_filename = os.path.join(EXPORTS_DIR, f"{username}_log.csv")
+        user_df.to_csv(user_log_filename, index=False)
+
+        print(f"[LOG EXPORTED] Trading log for {username} saved as {user_log_filename}!")
+
+    except Exception as e:
+        print(f"[ERROR] Failed to export trading log for {username}: {e}")
+
 
 @app.route("/next-turn", methods=["POST"])
 def next_turn():
@@ -336,9 +365,11 @@ def next_turn():
 
     turn = session.get("turn", 0)
     
-    # ✅ Ensure we don't go beyond available turns
+    # ✅ If it's the last turn, export logs and prevent further execution
     if turn >= len(STOCK_PRICES) - 1:
-        return jsonify({"message": "Game Over"})
+        export_user_log(username)  # ✅ Export this user's log
+        session.clear()  # ✅ Clear user session to force logout
+        return jsonify({"message": "Game Over, logs exported!"})  # ✅ Stop execution after game ends
 
     # ✅ Store old portfolio & cash BEFORE updating turn
     stock_data_old = STOCK_PRICES[turn]  # Old turn stock prices
@@ -348,13 +379,17 @@ def next_turn():
         holdings.get(ticker, 0) * stock_data_old[ticker]["price"]
         for ticker in stock_data_old
     )
-    cash_before = session.get("cash", user.capital)  # ✅ Store cash correctly before turn change
+    cash_before = session.get("cash", user.capital)  # ✅ Ensure cash is stored correctly
 
-    # ✅ Move to the next turn
+    # ✅ Move to the next turn safely
     session["turn"] = turn + 1  
 
+    # ✅ Check if next turn exists to avoid index errors
+    if session["turn"] >= len(STOCK_PRICES):
+        session["turn"] = len(STOCK_PRICES) - 1  # ✅ Ensure it doesn't go out of bounds
+
     # ✅ Load new stock prices
-    stock_data_new = STOCK_PRICES[session["turn"]]  # New turn stock prices
+    stock_data_new = STOCK_PRICES[session["turn"]]
 
     # ✅ Calculate new portfolio value based on NEW prices
     portfolio_after = sum(
@@ -362,8 +397,9 @@ def next_turn():
         for ticker in stock_data_new
     )
 
-    # ✅ Cash should NOT change unless a trade happens
+    # ✅ Ensure cash doesn't change during turn transition
     cash_after = cash_before  
+    session["cash"] = cash_after  # ✅ Update session cash
 
     # ✅ Correctly update capital with the **NEW** portfolio value
     capital_before = user.capital  
@@ -375,7 +411,7 @@ def next_turn():
     print(f"   - Portfolio Before: {portfolio_before}, Portfolio After: {portfolio_after}")
     print(f"   - Capital Before: {capital_before}, Capital After: {user.capital}")
 
-    # ✅ Commit to database
+    # ✅ Commit to database safely
     try:
         db.session.commit()
     except Exception as e:
@@ -386,11 +422,26 @@ def next_turn():
     return jsonify({
         "message": "Next turn started",
         "turn": session["turn"],
-        "capital": round(user.capital, 2),  # ✅ Now correctly reflects new portfolio
+        "capital": round(user.capital, 2),  # ✅ Ensures updated portfolio reflects correctly
         "portfolio": round(portfolio_after, 2),
         "cash": round(cash_after, 2),
         "holdings": holdings
     })
+
+# @app.route("/logout", methods=["POST"])
+# def logout():
+#     session.clear()  # ✅ Completely clear the user session
+#     return jsonify({"message": "Logged out"}), 200
+    
+def export_log(username):
+    """Exports the trading log for a specific user."""
+    try:
+        source_file = "trading_log.csv"
+        destination_file = f"{username}_trading_log.csv"
+        shutil.copy(source_file, destination_file)
+        print(f"[EXPORT] Trading log saved as {destination_file}")
+    except Exception as e:
+        print(f"[ERROR] Failed to export log: {e}")
 
 # Add the remaining function definitions (login, trade, action, etc.)
 if __name__ == "__main__":
