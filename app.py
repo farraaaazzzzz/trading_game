@@ -7,7 +7,6 @@ from datetime import datetime
 from flask_migrate import Migrate
 
 app = Flask(__name__)
-
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -36,7 +35,7 @@ HEADLINES = [
     "'ExxonMobil's $25 Billion Annual Investment Plan Through Next 5 years Sparks Investor Optimism Amid Rising Oil Prices.'\n\n'Netflix Dominates Streaming Market with Over 210 Million Subscribers, Outpacing Disney+ by More Than 100 Million.'\n\n",
     "'Tesla Faked Original Full Self-Driving Video, Former Employees Allege.'\n\n\n'Procter & Gamble is unlikely to repeat its stellar performance of recent years, however, it is an excellent wealth preservation vehicle.'\n\n",
     "'Hyundai Ioniq 5 Emerges as Strong Competitor, Posing Threat to Tesla's Market Share in EV Segment.'\n\n'Netflix Planning to change their No-Ad Strategy Amid Slowing Subscriber Growth, Analyst Warns.'\n\n",
-    "'Sell All the Shares of the Stocks you Own.'\n\n\n\n\n\n\n",
+    "'Sell All the Shares of the Stocks you Own.'\n\n\n\n\n\n",
     ]
 
 # Game configuration: Fixed stock prices & hidden ROI percentages
@@ -72,10 +71,10 @@ STOCK_PRICES = [
         "PG": {"price": 161.97, "image": "/static/turn5/PG.png", "roi": 1.013829722},
     },
     {
-        "TSLA": {"price": 362.71, "image": "/static/turn5/TSLA.png", "roi": 1},
-        "XOM": {"price": 66.75, "image": "/static/turn5/XOM.png", "roi": 1},
-        "NFLX": {"price": 567.52, "image": "/static/turn5/NFLX.png", "roi": 1},
-        "PG": {"price": 164.21, "image": "/static/turn5/PG.png", "roi": 1},
+        "TSLA": {"price": 362.71, "image": "/static/turn6/TSLA.png", "roi": 1},
+        "XOM": {"price": 66.75, "image": "/static/turn6/XOM.png", "roi": 1},
+        "NFLX": {"price": 567.52, "image": "/static/turn6/NFLX.png", "roi": 1},
+        "PG": {"price": 164.21, "image": "/static/turn6/PG.png", "roi": 1},
     },
 ]
 
@@ -237,6 +236,8 @@ def action():
         return jsonify({"error": "User not found"}), 400  
 
     turn = session.get("turn", 0)
+    if turn >= len(STOCK_PRICES):
+        return jsonify({"error": "Game has ended, no further trades allowed."}), 400  # ✅ Stop trade execution
     cash_before = session.get("cash", user.capital)  # ✅ Store cash before trade
     stock_data = STOCK_PRICES[turn]  # ✅ Ensure stock data is correctly loaded
 
@@ -327,31 +328,29 @@ def action():
     
 # ✅ Ensure an 'exports' directory exists
 EXPORTS_DIR = "exports"
-os.makedirs(EXPORTS_DIR, exist_ok=True)
+LOG_FILE = "trading_log.csv"
 
 # ✅ Function to export user-specific trading log
 def export_user_log(username):
     try:
         df = pd.read_csv(LOG_FILE)
-
         if df.empty:
             print(f"[WARNING] No trades found for {username}, nothing to export.")
             return
-
         user_df = df[df["username"] == username]  # ✅ Filter user's trades only
-
         if user_df.empty:
-            print(f"[WARNING] {username} has no trades recorded.")
-            return
-
-        user_log_filename = os.path.join(EXPORTS_DIR, f"{username}_log.csv")
+            print(f"[WARNING] {username} has no trades recorded. Creating empty log.")
+            user_df = pd.DataFrame(columns=df.columns)  # Create an empty DataFrame
+        # Generate timestamp in the format: DD-MM-HH-MM
+        timestamp = datetime.now().strftime('%d-%m-%H-%M')
+        user_log_filename = os.path.join(EXPORTS_DIR, f"{username}_{timestamp}_log.csv")
+        # Ensure the exports directory exists
+        os.makedirs(EXPORTS_DIR, exist_ok=True)
+        # Save user log
         user_df.to_csv(user_log_filename, index=False)
-
         print(f"[LOG EXPORTED] Trading log for {username} saved as {user_log_filename}!")
-
     except Exception as e:
         print(f"[ERROR] Failed to export trading log for {username}: {e}")
-
 
 @app.route("/next-turn", methods=["POST"])
 def next_turn():
@@ -369,7 +368,7 @@ def next_turn():
     if turn >= len(STOCK_PRICES) - 1:
         export_user_log(username)  # ✅ Export this user's log
         session.clear()  # ✅ Clear user session to force logout
-        return jsonify({"message": "Game Over, logs exported!"})  # ✅ Stop execution after game ends
+        return jsonify({"message": "Game Over", "logout": True})  # ✅ Stop execution after game ends
 
     # ✅ Store old portfolio & cash BEFORE updating turn
     stock_data_old = STOCK_PRICES[turn]  # Old turn stock prices
@@ -428,10 +427,10 @@ def next_turn():
         "holdings": holdings
     })
 
-# @app.route("/logout", methods=["POST"])
-# def logout():
-#     session.clear()  # ✅ Completely clear the user session
-#     return jsonify({"message": "Logged out"}), 200
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()  # ✅ Completely clear the user session
+    return jsonify({"message": "Logged out"}), 200
     
 def export_log(username):
     """Exports the trading log for a specific user."""

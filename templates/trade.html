@@ -159,6 +159,11 @@
         let safeValue = parseFloat(value) || 0; // 🔹 Ensure it's a number
         document.getElementById("capital").innerText = safeValue.toFixed(2);
       }
+      function updateFinancials(capital, cash, portfolio) {
+        updateCapital(capital);
+        document.getElementById("cash").innerText = cash.toFixed(2);
+        document.getElementById("portfolio").innerText = portfolio.toFixed(2);
+      }
       function cleanHoldings() {
         // Get available tickers from `stock_data`
         let availableTickers = JSON.parse(`{{ stock_data | tojson | safe }}`);
@@ -170,109 +175,81 @@
           }
         });
       }
+      function selectTicker(ticker) {
+        selectedTicker = ticker;
+
+        // ✅ Remove highlight from all buttons
+        document.querySelectorAll(".ticker button").forEach((btn) => {
+          btn.style.backgroundColor = "";
+          btn.style.color = "";
+        });
+
+        // ✅ Highlight selected ticker button
+        let selectedButton = document.querySelector(
+          `.ticker button[onclick="selectTicker('${ticker}')"]`
+        );
+        if (selectedButton) {
+          selectedButton.style.backgroundColor = "#007bff";
+          selectedButton.style.color = "white";
+        }
+
+        // ✅ Update stock image dynamically
+        let imagePath = `/static/turn{{ turn }}/${ticker}.png`;
+        document.getElementById("stock-image").src = imagePath;
+        console.log(`✅ Stock image updated to: ${imagePath}`);
+
+        // ❌ DO NOT update stock values (prevents unintended resets)
+      }
       function updateStockValues() {
-        // Fetch available tickers from the page's stock_data
+        console.log("🔄 Updating Stock Values...");
+
         let availableTickers = JSON.parse(`{{ stock_data | tojson | safe }}`);
 
-        for (const ticker in holdings) {
+        document.querySelectorAll(".stock-value").forEach((valueElement) => {
+          let ticker = valueElement.getAttribute("data-ticker");
+
           if (!availableTickers[ticker]) {
-            console.warn(`Skipping old ticker: ${ticker}`); // Debugging: Only warn for old tickers
-            continue; // Skip tickers that are not part of stock_data
+            console.warn(`Skipping old ticker: ${ticker}`);
+            return;
           }
 
           let holdingsElement = document.getElementById(`holdings-${ticker}`);
           let priceElement = document.getElementById(`price-${ticker}`);
-          let valueElement = document.getElementById(`stock-value-${ticker}`);
 
-          if (!holdingsElement || !priceElement || !valueElement) {
+          if (!holdingsElement || !priceElement) {
             console.warn(`Missing elements for ticker: ${ticker}`);
-            continue; // Skip missing elements
+            return;
           }
 
           let quantity = parseInt(holdingsElement.innerText, 10) || 0;
-          let price = parseFloat(priceElement.innerText);
+          let price = parseFloat(availableTickers[ticker]["price"]);
           let totalValue = quantity * price;
-          let previousValue =
-            parseFloat(valueElement.getAttribute("data-prev-value")) || 0;
 
-          // ✅ Ensure color coding for stock value
+          // 🔹 Persist previous values correctly across turns
+          let previousValueAttr = valueElement.getAttribute("data-prev-value");
+          let previousValue = previousValueAttr
+            ? parseFloat(previousValueAttr)
+            : totalValue;
+
+          console.log(
+            `Ticker: ${ticker}, Quantity: ${quantity}, Price: ${price}, Total Value: ${totalValue}, Previous Value: ${previousValue}`
+          );
+
+          // ✅ Independent color coding
           if (totalValue > previousValue) {
-            valueElement.style.color = "green";
+            valueElement.classList.add("green");
+            valueElement.classList.remove("red");
           } else if (totalValue < previousValue) {
-            valueElement.style.color = "red";
+            valueElement.classList.add("red");
+            valueElement.classList.remove("green");
           } else {
-            valueElement.style.color = "black";
+            valueElement.classList.remove("green", "red");
           }
 
+          // ✅ Store updated value for the next turn
           valueElement.innerText = totalValue.toFixed(2);
-        }
-      }
-      function startTimer() {
-        const timerElement = document.getElementById("timer");
-        const interval = setInterval(() => {
-          if (timeLeft <= 0) {
-            clearInterval(interval);
-            fetch("/next-turn", { method: "POST" })
-              .then((response) => response.json()) // ✅ Ensure response is parsed properly
-              .then((data) => {
-                console.log("Server Response:", data); // 🔹 Debugging: Log full response
-
-                if (data.message.includes("Game Over")) {
-                  alert("Game Over! Logs exported. Redirecting to homepage...");
-                  setTimeout(() => {
-                    fetch("/logout", { method: "POST" }) // ✅ Ensure session is cleared
-                      .then(() => (location.href = "/")); // ✅ Redirect to homepage
-                  }, 1000);
-                  return;
-                }
-
-                // ✅ Ensure safe default values
-                document.getElementById("capital").innerText = data.capital
-                  ? data.capital.toFixed(2)
-                  : "0.00";
-                document.getElementById("portfolio").innerText = data.portfolio
-                  ? data.portfolio.toFixed(2)
-                  : "0.00";
-                document.getElementById("cash").innerText = data.cash
-                  ? data.cash.toFixed(2)
-                  : "0.00";
-
-                // ✅ Update Quantity Owned Table
-                if (data.holdings) {
-                  Object.keys(data.holdings).forEach((ticker) => {
-                    let element = document.getElementById(`holdings-${ticker}`);
-                    if (element) {
-                      element.innerText = data.holdings[ticker];
-                    }
-                  });
-                }
-
-                alert("Next Turn Started!");
-                setTimeout(() => location.reload(), 500); // ✅ Short delay before reloading
-              })
-              .catch((error) =>
-                alert(
-                  "An error occurred during turn transition: " + error.message
-                )
-              );
-          } else {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerElement.innerText = `Time Left: ${minutes
-              .toString()
-              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-            timeLeft--;
-          }
-        }, 1000);
-      }
-
-      function selectTicker(ticker) {
-        selectedTicker = ticker;
-        let turn = "{{ turn }}"; // Ensure it's properly converted to a string
-        document.getElementById(
-          "stock-image"
-        ).src = `/static/turn${turn}/${ticker}.png`;
-        updateTotal();
+          valueElement.setAttribute("data-prev-value", totalValue.toFixed(2));
+        });
       }
       function trade(action) {
         const quantity = parseInt(
@@ -315,9 +292,10 @@
               return;
             }
 
-            updateStockValues();
-            updateCapital(data.capital);
+            holdings = data.holdings; // ✅ Update local holdings
 
+            // ✅ Update Capital, Portfolio, and Cash
+            updateCapital(data.capital);
             document.getElementById("portfolio").innerText = data.portfolio
               ? data.portfolio.toFixed(2)
               : "0.00";
@@ -325,17 +303,21 @@
               ? data.cash.toFixed(2)
               : "0.00";
 
-            // ✅ Update Holdings Table
-            if (data.holdings && data.holdings[selectedTicker] !== undefined) {
-              document.getElementById(`holdings-${selectedTicker}`).innerText =
-                data.holdings[selectedTicker];
-            }
+            // ✅ Update Holdings for ALL tickers, not just selected one
+            Object.keys(data.holdings).forEach((ticker) => {
+              let holdingsElement = document.getElementById(
+                `holdings-${ticker}`
+              );
+              if (holdingsElement) {
+                holdingsElement.innerText = data.holdings[ticker];
+              }
+            });
 
-            updateStockValues(); // ✅ Ensure stock values update after trade
+            // ✅ Ensure stock values update for ALL tickers after a trade
+            updateStockValues();
           })
-
           .catch((error) => {
-            alert("Trade Error: " + error.message); // ✅ Show alert for failed transactions
+            alert("Trade Error: " + error.message);
           });
       }
       function updateTotal() {
@@ -343,21 +325,77 @@
           document.getElementById("quantity").value,
           10
         );
-        const price = parseFloat(
-          document.getElementById(`price-${selectedTicker}`).innerText
-        );
+        let availableTickers = JSON.parse(`{{ stock_data | tojson | safe }}`);
+        // ✅ Get price directly from stock_data
+        const price = availableTickers[selectedTicker]
+          ? parseFloat(availableTickers[selectedTicker]["price"])
+          : 0;
         const total = isNaN(quantity) || isNaN(price) ? 0 : quantity * price;
         document.getElementById("total-price").innerText = total.toFixed(2);
       }
+      function startTimer() {
+        const timerElement = document.getElementById("timer");
+        const interval = setInterval(() => {
+          if (timeLeft <= 0) {
+            clearInterval(interval);
+            fetch("/next-turn", { method: "POST" })
+              .then((response) => response.json())
+              .then((data) => {
+                console.log("Server Response:", data);
 
+                if (data.message.includes("Game Over")) {
+                  alert("Game Over! Logs exported. Redirecting to homepage...");
+                  setTimeout(() => {
+                    fetch("/logout", { method: "POST" }).then(
+                      () => (location.href = "/")
+                    );
+                  }, 1000);
+                  return;
+                }
+
+                // ✅ Update financials
+                updateFinancials(data.capital, data.cash, data.portfolio);
+
+                // ✅ Update stock values after turn change
+                updateStockValues();
+
+                alert("Next Turn Started!");
+                setTimeout(() => location.reload(), 500);
+              })
+              .catch((error) =>
+                alert(
+                  "An error occurred during turn transition: " + error.message
+                )
+              );
+          } else {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.innerText = `Time Left: ${minutes
+              .toString()
+              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+            timeLeft--;
+          }
+        }, 1000);
+      }
       window.onload = function () {
         cleanHoldings();
-        startTimer();
         updateStockValues();
+        startTimer();
         let capitalValue =
           parseFloat(document.getElementById("capital").innerText) || 0;
         updateCapital(capitalValue); // ✅ Now it receives a valid number
         updateTotal();
+        // ✅ Force TSLA as the default selected ticker
+        selectedTicker = "TSLA";
+        // ✅ Ensure the correct stock image loads for TSLA
+        let imagePath = `/static/turn{{ turn }}/TSLA.png`;
+        let imgElement = document.getElementById("stock-image");
+        if (imgElement) {
+          imgElement.src = imagePath;
+          console.log(`✅ Default stock image set to: ${imagePath}`);
+        }
+        // ✅ Ensure TSLA button is highlighted
+        selectTicker(selectedTicker);
       };
     </script>
   </body>
