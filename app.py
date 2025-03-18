@@ -35,6 +35,7 @@ HEADLINES = [
     "'ExxonMobil's $25 Billion Annual Investment Plan Through Next 5 years Sparks Investor Optimism Amid Rising Oil Prices.'\n\n'Netflix Dominates Streaming Market with Over 210 Million Subscribers, Outpacing Disney+ by More Than 100 Million.'\n\n",
     "'Tesla Faked Original Full Self-Driving Video, Former Employees Allege.'\n\n\n'Procter & Gamble is unlikely to repeat its stellar performance of recent years, however, it is an excellent wealth preservation vehicle.'\n\n",
     "'Hyundai Ioniq 5 Emerges as Strong Competitor, Posing Threat to Tesla's Market Share in EV Segment.'\n\n'Netflix Planning to change their No-Ad Strategy Amid Slowing Subscriber Growth, Analyst Warns.'\n\n",
+    "'Sell All the Shares of the Stocks you Own.'\n\n\n\n\n",
     ]
 
 # Game configuration: Fixed stock prices & hidden ROI percentages
@@ -68,6 +69,12 @@ STOCK_PRICES = [
         "XOM": {"price": 61.89, "image": "/static/turn5/XOM.png", "roi": 1.078526418},
         "NFLX": {"price": 613.12, "image": "/static/turn5/NFLX.png", "roi": 0.925626305},
         "PG": {"price": 161.97, "image": "/static/turn5/PG.png", "roi": 1.013829722},
+    },
+    {
+        "TSLA": {"price": 362.71, "image": "/static/turn5/TSLA.png", "roi": 1},
+        "XOM": {"price": 66.75, "image": "/static/turn5/XOM.png", "roi": 1},
+        "NFLX": {"price": 567.52, "image": "/static/turn5/NFLX.png", "roi": 1},
+        "PG": {"price": 164.21, "image": "/static/turn5/PG.png", "roi": 1},
     },
 ]
 
