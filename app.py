@@ -154,7 +154,7 @@ def init_db():
             {"username": "E9127", "password": "E9127"},
             {"username": "E8328", "password": "E8328"},
             {"username": "E7729", "password": "E7729"},
-            {"username": "E1130", "password": "E1130"},
+            {"username": "E1130", "password": "E1130"}
         ]
         for user_data in users:
             if not User.query.filter_by(username=user_data["username"]).first():
