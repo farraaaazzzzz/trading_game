@@ -96,36 +96,66 @@ def init_db():
         db.create_all()
         # Add multiple users with predefined usernames and passwords
         users = [
-            {"username": "E5401", "password": "E5401"},
-            {"username": "E9302", "password": "E9302"},
-            {"username": "E5303", "password": "E5303"},
-            {"username": "E4204", "password": "E4204"},
-            {"username": "E9505", "password": "E9505"},
-            {"username": "E8006", "password": "E8006"},
-            {"username": "E4007", "password": "E4007"},
-            {"username": "E2308", "password": "E2308"},
-            {"username": "E3009", "password": "E3009"},
-            {"username": "E9610", "password": "E9610"},
-            {"username": "E2711", "password": "E2711"},
-            {"username": "E6612", "password": "E6612"},
-            {"username": "E7513", "password": "E7513"},
-            {"username": "E8914", "password": "E8914"},
-            {"username": "E6715", "password": "E6715"},
-            {"username": "N8201", "password": "N8201"},
-            {"username": "N7802", "password": "N7802"},
-            {"username": "N7903", "password": "N7903"},
-            {"username": "N1104", "password": "N1104"},
-            {"username": "N4905", "password": "N4905"},
-            {"username": "N4406", "password": "N4406"},
-            {"username": "N5107", "password": "N5107"},
-            {"username": "N1008", "password": "N1008"},
-            {"username": "N5809", "password": "N5809"},
-            {"username": "N2510", "password": "N2510"},
-            {"username": "N3111", "password": "N3111"},
-            {"username": "N3512", "password": "N3512"},
-            {"username": "N1913", "password": "N1913"},
-            {"username": "N9214", "password": "N9214"},
-            {"username": "N9715", "password": "N9715"},
+            {"username": "N0801", "password": "N0801"},
+            {"username": "N5202", "password": "N5202"},
+            {"username": "N8203", "password": "N8203"},
+            {"username": "N5804", "password": "N5804"},
+            {"username": "N8905", "password": "N8905"},
+            {"username": "N4606", "password": "N4606"},
+            {"username": "N0307", "password": "N0307"},
+            {"username": "N2408", "password": "N2408"},
+            {"username": "N4909", "password": "N4909"},
+            {"username": "N6910", "password": "N6910"},
+            {"username": "N6211", "password": "N6211"},
+            {"username": "N7312", "password": "N7312"},
+            {"username": "N8713", "password": "N8713"},
+            {"username": "N2314", "password": "N2314"},
+            {"username": "N2915", "password": "N2915"},
+            {"username": "N3916", "password": "N3916"},
+            {"username": "N6717", "password": "N6717"},
+            {"username": "N1818", "password": "N1818"},
+            {"username": "N9319", "password": "N9319"},
+            {"username": "N3220", "password": "N3220"},
+            {"username": "N2721", "password": "N2721"},
+            {"username": "N0222", "password": "N0222"},
+            {"username": "N0523", "password": "N0523"},
+            {"username": "N9424", "password": "N9424"},
+            {"username": "N0925", "password": "N0925"},
+            {"username": "N8626", "password": "N8626"},
+            {"username": "N6027", "password": "N6027"},
+            {"username": "N9228", "password": "N9228"},
+            {"username": "N1029", "password": "N1029"},
+            {"username": "N7030", "password": "N7030"},
+            {"username": "E1301", "password": "E1301"},
+            {"username": "E5002", "password": "E5002"},
+            {"username": "E6403", "password": "E6403"},
+            {"username": "E3704", "password": "E3704"},
+            {"username": "E5105", "password": "E5105"},
+            {"username": "E7206", "password": "E7206"},
+            {"username": "E3007", "password": "E3007"},
+            {"username": "E3508", "password": "E3508"},
+            {"username": "E8509", "password": "E8509"},
+            {"username": "E2010", "password": "E2010"},
+            {"username": "E4011", "password": "E4011"},
+            {"username": "E0712", "password": "E0712"},
+            {"username": "E6113", "password": "E6113"},
+            {"username": "E2514", "password": "E2514"},
+            {"username": "E5515", "password": "E5515"},
+            {"username": "E6516", "password": "E6516"},
+            {"username": "E1217", "password": "E1217"},
+            {"username": "E1518", "password": "E1518"},
+            {"username": "E1719", "password": "E1719"},
+            {"username": "E6820", "password": "E6820"},
+            {"username": "E5721", "password": "E5721"},
+            {"username": "E8122", "password": "E8122"},
+            {"username": "E7123", "password": "E7123"},
+            {"username": "E4524", "password": "E4524"},
+            {"username": "E4225", "password": "E4225"},
+            {"username": "E0426", "password": "E0426"},
+            {"username": "E9127", "password": "E9127"},
+            {"username": "E8328", "password": "E8328"},
+            {"username": "E7729", "password": "E7729"},
+            {"username": "E1130", "password": "E1130"},
         ]
         for user_data in users:
             if not User.query.filter_by(username=user_data["username"]).first():
@@ -161,6 +191,17 @@ def login():
 
 
         session["username"] = username
+        session["turn"] = 0
+
+        # Ensure user holdings exist for all stocks
+        for ticker in TICKERS:
+            holding = UserHoldings.query.filter_by(user_id=user.id, ticker=ticker).first()
+            if not holding:
+                holding = UserHoldings(user_id=user.id, ticker=ticker, quantity=0)
+                db.session.add(holding)
+
+        db.session.commit()  # Save changes to database
+
         if "game_start_time" not in session:
             session["game_start_time"] = datetime.now().timestamp()  # Store game start timestamp
 
@@ -183,6 +224,12 @@ def trade():
     stock_data = STOCK_PRICES[turn]
     user = User.query.filter_by(username=username).first()
     holdings = {holding.ticker: holding.quantity for holding in user.holdings}
+
+    # Ensure all tickers exist in holdings dictionary
+    for ticker in TICKERS:
+        if ticker not in holdings:
+            holdings[ticker] = 0
+
     
     # Assign a different headline per turn
     current_headline = HEADLINES[turn]  # Select one headline per turn
