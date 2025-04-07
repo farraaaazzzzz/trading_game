@@ -31,7 +31,7 @@ class UserHoldings(db.Model):
     user = db.relationship('User', backref=db.backref('holdings', lazy=True))
 
 HEADLINES = [
-    "'Elon Musk's $5 Billion Tesla Stock Sale Raises Eyebrows.'\n\n\n'ExxonMobil Announces FID for Mega China Petchem Project.'\n\n\n",
+    "'Elon Musk's $5 Billion Tesla Stock Sale Raises Eyebrows.'\n\n\n'ExxonMobil Announces Final Investment Decision (FID) for Mega China Petchem Project.'\n\n\n",
     "'Netflix Faces Surge in Phishing Attacks: Over 50% of Users were Targeted.'\n\n\n'P&G's Acquisition of Farmacy Beauty Strengthens Skincare Portfolio and Appeals to Younger Consumers.'\n\n",
     "'ExxonMobil's $25 Billion Annual Investment Plan Through Next 5 years Sparks Investor Optimism Amid Rising Oil Prices.'\n\n'Netflix Dominates Streaming Market with Over 210 Million Subscribers, Outpacing Disney+ by More Than 100 Million.'\n\n",
     "'Tesla Faked Original Full Self-Driving Video, Former Employees Allege.'\n\n\n'Procter & Gamble is unlikely to repeat its stellar performance of recent years, however, it is an excellent wealth preservation vehicle.'\n\n",
