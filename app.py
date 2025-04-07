@@ -189,7 +189,6 @@ def login():
                 "stockportfolio_before", "stockportfolio_after", "Total_assets"  # ✅ New portfolio tracking
             ]+ [f"total_{ticker}_holding" for ticker in TICKERS] + [f"{ticker}_value" for ticker in TICKERS])  # Add columns for cumulative holdings
 
-
         session["username"] = username
         session["turn"] = 0
 
@@ -209,7 +208,6 @@ def login():
         return redirect("/trade")
 
     return jsonify({"error": "Invalid credentials"}), 401
-
 
 @app.route("/trade")
 def trade():
