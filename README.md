@@ -9,8 +9,8 @@ This project is a web-based trading game designed for our Final Year Project (FY
 - **User Authentication**: Users can log in with predefined credentials stored in the database.
 - **Dynamic Stock Prices**: Stock prices fluctuate by ±10% every round.
 - **Trading Actions**: Users can buy, sell, or hold stocks, which are reflected in their capital.
-- **Round Timer**: Each trading round lasts 1 minute and 45 seconds.
-- **Action Logging**: All trades are logged in a CSV file for later analysis.
+- **Round Timer**: Each trading round lasts 1 minute.
+- **Action Logging**: All trades are logged in a CSV file according to the user ID for later analysis.
 - **Backend Management**: Built with Flask and SQLAlchemy to manage users, stock prices, and trades.
 
 ---
