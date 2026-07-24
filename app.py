@@ -79,17 +79,20 @@ STOCK_PRICES = [
     },
 ]
 
-# Initialize CSV for trade logs
-LOG_FILE = "trading_log.csv"
+# Per-user trade logs (each user gets their own CSV, so one student's login
+# can never truncate or overwrite another student's in-progress trade log)
+LOGS_DIR = "logs"
+EXPORTS_DIR = "exports"
 TICKERS = ["TSLA", "XOM", "NFLX", "PG"]  # Add all ticker symbols here
-if not os.path.exists(LOG_FILE):
-    with open(LOG_FILE, "w", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow(["timestamp", "username", "turn", "action", "ticker", "quantity","capital_before", "capital_after",
-            "cash_before", "cash_after",  # ✅ New cash tracking
-            "portfolio_before", "portfolio_after", "Total_assets"  # ✅ New portfolio tracking
-        ] + [f"total_{ticker}_holding" for ticker in TICKERS] + [f"{ticker}_value" for ticker in TICKERS]
-        )
+os.makedirs(LOGS_DIR, exist_ok=True)
+
+LOG_HEADER = [
+    "timestamp", "username", "turn", "action", "ticker", "quantity",
+    "cash_before", "cash_after", "stockportfolio_before", "stockportfolio_after", "Total_assets"
+] + [f"total_{ticker}_holding" for ticker in TICKERS] + [f"{ticker}_value" for ticker in TICKERS]
+
+def user_log_path(username):
+    return os.path.join(LOGS_DIR, f"{username}_trading_log.csv")
 @app.cli.command("init-db")
 def init_db():
     with app.app_context():
@@ -262,13 +265,10 @@ def login():
 
         db.session.commit()
 
-        # Update CSV header
-        with open(LOG_FILE, "w", newline="") as file:
+        # Start a fresh log for this user only (their own file, not shared)
+        with open(user_log_path(username), "w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow([
-                "timestamp", "username", "turn", "action", "ticker", "quantity","cash_before", "cash_after",  # ✅ New cash tracking
-                "stockportfolio_before", "stockportfolio_after", "Total_assets"  # ✅ New portfolio tracking
-            ]+ [f"total_{ticker}_holding" for ticker in TICKERS] + [f"{ticker}_value" for ticker in TICKERS])  # Add columns for cumulative holdings
+            writer.writerow(LOG_HEADER)
 
         session["username"] = username
         session["turn"] = 0
@@ -435,14 +435,14 @@ def action():
     total_holdings = [holdings.get(ticker, 0) for ticker in TICKERS]
     stock_values = [holdings.get(ticker, 0) * stock_data[ticker]["price"] for ticker in TICKERS]
 
-    with open(LOG_FILE, "a", newline="") as file:
+    with open(user_log_path(username), "a", newline="") as file:
         writer = csv.writer(file)
         writer.writerow([
             timestamp, username, turn + 1, action, ticker, quantity,
             cash_before, cash_after,  # ✅ Cash values before/after
             portfolio_before, portfolio_after,  # ✅ Portfolio before/after
             user.capital,  # ✅ Ensure final capital is logged correctly
-        ] + total_holdings + stock_values)  
+        ] + total_holdings + stock_values)
 
     return jsonify({
         "holdings": holdings,
@@ -450,22 +450,17 @@ def action():
         "cash": round(cash_after, 2),
         "portfolio": round(portfolio_after, 2)
     })
-    
-# ✅ Ensure an 'exports' directory exists
-EXPORTS_DIR = "exports"
-LOG_FILE = "trading_log.csv"
 
 def export_user_log(username):
+    log_path = user_log_path(username)
     try:
-        df = pd.read_csv(LOG_FILE)
-
-        if df.empty:
+        if not os.path.exists(log_path):
             print(f"[WARNING] No trades found for {username}, nothing to export.")
             return
 
-        user_df = df[df["username"] == username]  # ✅ Filter user's trades only
+        df = pd.read_csv(log_path)
 
-        if user_df.empty:
+        if df.empty:
             print(f"[WARNING] {username} has no trades recorded.")
             return
 
@@ -477,7 +472,7 @@ def export_user_log(username):
         os.makedirs(EXPORTS_DIR, exist_ok=True)
 
         # Save user log
-        user_df.to_csv(user_log_filename, index=False)
+        df.to_csv(user_log_filename, index=False)
 
         print(f"[LOG EXPORTED] Trading log for {username} saved as {user_log_filename}!")
 
@@ -560,11 +555,11 @@ def next_turn():
         "holdings": holdings
     })
 
-# @app.route("/logout", methods=["POST"])
-# def logout():
-#     session.clear()  # ✅ Completely clear the user session
-#     return jsonify({"message": "Logged out"}), 200
-    
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()  # Completely clear the user session
+    return jsonify({"message": "Logged out"}), 200
+
 def export_log(username):
     """Exports the trading log for a specific user."""
     try:
