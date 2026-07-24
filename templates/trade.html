@@ -8,15 +8,7 @@
   </head>
   <body>
     <div class="bento">
-      <div class="tile tile-chart">
-        <img
-          id="stock-image"
-          src="{{ stock_data['TSLA']['image'] }}"
-          alt="Stock Image"
-        />
-      </div>
-
-      <div class="tile tile-turn">
+      <div class="tile tile-topbar">
         <div class="topbar-left">
           <span class="badge-live">● LIVE</span>
           <span class="turn-label">Turn <strong>{{ turn }}</strong> / 6</span>
@@ -29,6 +21,14 @@
         <h5 id="news-headline">
           {{ headline | replace("\n", "<br />") | safe }}
         </h5>
+      </div>
+
+      <div class="tile tile-chart">
+        <img
+          id="stock-image"
+          src="{{ stock_data['TSLA']['image'] }}"
+          alt="Stock Image"
+        />
       </div>
 
       <div class="tile tile-stats">
