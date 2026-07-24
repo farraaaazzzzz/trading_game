@@ -2,41 +2,52 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=2.0" />
-    <title>Login</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        margin-top: 50px;
-      }
-      input {
-        padding: 10px;
-        margin: 10px;
-        width: 200px;
-      }
-      button {
-        padding: 10px 20px;
-        font-size: 16px;
-      }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login · Trading Simulator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   </head>
-  <body>
-    <h1>Login to Trading Game</h1>
-    <form action="/" method="POST">
-      <input
-        type="text"
-        name="username"
-        placeholder="Username"
-        required
-      /><br />
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        required
-      /><br />
-      <button type="submit">Login</button>
-    </form>
+  <body class="login-page">
+    <div class="ticker-tape">
+      <div class="ticker-track">
+        <span>TSLA <span class="up">▲ 337.80</span></span>
+        <span>XOM <span class="down">▼ 64.37</span></span>
+        <span>NFLX <span class="up">▲ 679.33</span></span>
+        <span>PG <span class="up">▲ 147.40</span></span>
+        <span>TSLA <span class="up">▲ 337.80</span></span>
+        <span>XOM <span class="down">▼ 64.37</span></span>
+        <span>NFLX <span class="up">▲ 679.33</span></span>
+        <span>PG <span class="up">▲ 147.40</span></span>
+      </div>
+    </div>
+    <div class="login-center">
+      <div class="login-card">
+        <div class="login-logo">📈</div>
+        <h1>Trading Simulator</h1>
+        <p class="login-sub">Sign in with your assigned credentials to begin</p>
+        <form action="/" method="POST">
+          <label class="field">
+            <span class="field-label">Username</span>
+            <input
+              type="text"
+              name="username"
+              placeholder="Enter username"
+              required
+              autocomplete="username"
+            />
+          </label>
+          <label class="field">
+            <span class="field-label">Password</span>
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter password"
+              required
+              autocomplete="current-password"
+            />
+          </label>
+          <button type="submit" class="btn-primary">Login →</button>
+        </form>
+      </div>
+    </div>
   </body>
 </html>

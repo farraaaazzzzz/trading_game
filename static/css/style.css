@@ -1,0 +1,470 @@
+/* Trading Simulator — dark terminal theme */
+
+:root {
+  --bg: #0a0e14;
+  --bg-glow: radial-gradient(ellipse 900px 500px at 50% -10%, rgba(59, 130, 246, 0.12), transparent);
+  --panel: #10151d;
+  --panel-alt: #141b26;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #e5e7eb;
+  --text-dim: #8b93a1;
+  --text-faint: #5b6472;
+  --accent: #3b82f6;
+  --accent-dim: rgba(59, 130, 246, 0.15);
+  --green: #22c55e;
+  --green-dim: rgba(34, 197, 94, 0.12);
+  --red: #ef4444;
+  --red-dim: rgba(239, 68, 68, 0.12);
+  --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-glow), var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Ticker tape (decorative) ---------- */
+
+.ticker-tape {
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  white-space: nowrap;
+}
+
+.ticker-track {
+  display: inline-flex;
+  gap: 48px;
+  padding: 10px 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-dim);
+  animation: ticker-scroll 22s linear infinite;
+}
+
+.ticker-track span {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ticker-track .up {
+  color: var(--green);
+}
+
+.ticker-track .down {
+  color: var(--red);
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---------- Login page ---------- */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.login-logo {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.login-card h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.login-sub {
+  margin: 0 0 28px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: var(--sans);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.field input::placeholder {
+  color: var(--text-faint);
+}
+
+.btn-primary {
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px 16px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-primary:active {
+  transform: scale(0.99);
+}
+
+/* ---------- Trade page: bento grid ---------- */
+/* Every section is its own level tile — nothing sits above the chart,
+   the grid fills the viewport edge to edge with no scrolling. */
+
+html,
+body {
+  height: 100%;
+}
+
+.bento {
+  box-sizing: border-box;
+  height: 100vh;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  grid-template-rows: auto auto auto auto 1fr;
+  gap: 14px;
+}
+
+.tile {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.tile-chart {
+  grid-column: 1;
+  grid-row: 1 / span 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.tile-chart img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tile-turn {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.badge-live {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.06em;
+}
+
+.turn-label {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.turn-label strong {
+  color: var(--text);
+}
+
+.timer {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  padding: 5px 12px;
+  border-radius: 8px;
+}
+
+.accent-green {
+  color: var(--green);
+}
+
+.tile-headline {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+}
+
+.headline-icon {
+  font-size: 15px;
+}
+
+.tile-headline h5 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.tile-stats {
+  grid-column: 2;
+  grid-row: 3;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.tile-stats h4 {
+  margin: 3px 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.tile-order {
+  grid-column: 2;
+  grid-row: 4;
+  padding: 12px 16px;
+}
+
+.ticker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ticker button {
+  padding: 8px 12px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.ticker button:hover {
+  border-color: var(--accent);
+}
+
+.total-line h4 {
+  margin: 6px 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.order-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.order-row input#quantity {
+  width: 76px;
+  padding: 9px 8px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  text-align: center;
+}
+
+.order-row input#quantity:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.btn-buy,
+.btn-sell {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.btn-buy {
+  background: var(--green);
+  color: #06170c;
+}
+
+.btn-sell {
+  background: var(--red);
+  color: #1a0505;
+}
+
+.btn-buy:hover,
+.btn-sell:hover {
+  filter: brightness(1.1);
+}
+
+.btn-buy:active,
+.btn-sell:active {
+  transform: scale(0.99);
+}
+
+.tile-holdings {
+  grid-column: 2;
+  grid-row: 5;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.holdings-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.tile-holdings table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tile-holdings th,
+.tile-holdings td {
+  padding: 6px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.tile-holdings th {
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.tile-holdings td {
+  font-family: var(--mono);
+}
+
+.tile-holdings td:first-child {
+  font-family: var(--sans);
+  font-weight: 600;
+}
+
+.tile-holdings tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 720px) {
+  .bento {
+    height: auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  .tile-chart {
+    grid-column: 1;
+    grid-row: auto;
+    height: 220px;
+  }
+  .tile-turn,
+  .tile-headline,
+  .tile-stats,
+  .tile-order,
+  .tile-holdings {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}

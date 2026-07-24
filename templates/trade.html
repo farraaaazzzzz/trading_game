@@ -3,152 +3,97 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trade</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-      }
-      .container {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 20px;
-      }
-      .left,
-      .right {
-        width: 46%;
-      }
-      h4 {
-        margin: 2px 0;
-        line-height: 2;
-      }
-      .total,
-      .headline,
-      .center p {
-        margin: 2px 0;
-      }
-      .headline {
-        margin-top: 10px;
-        font-size: 22px;
-        font-weight: bold;
-      }
-      .ticker button {
-        padding: 10px;
-        margin: 5px;
-      }
-      #timer {
-        font-size: 20px;
-        font-weight: bold;
-      }
-      .total {
-        font-size: 15px;
-        font-weight: bold;
-      }
-      table {
-        width: 80%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        margin-right: 20px;
-      }
-      th,
-      td {
-        border: 1px solid black;
-        padding: 8px;
-        text-align: center;
-      }
-      th {
-        background-color: rgb(238, 238, 238);
-      }
-      .center {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      .center p {
-        font-weight: bold;
-      }
-      .green {
-        color: green;
-        font-weight: bold;
-      }
-      .red {
-        color: red;
-        font-weight: bold;
-      }
-    </style>
+    <title>Trade · Trading Simulator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   </head>
   <body>
-    <div class="center">
-      <p id="timer">Time Left: 01:00</p>
-      <p>Turn: {{ turn }} / 6</p>
-    </div>
-    <div class="container">
-      <div class="left">
+    <div class="bento">
+      <div class="tile tile-chart">
         <img
           id="stock-image"
           src="{{ stock_data['TSLA']['image'] }}"
           alt="Stock Image"
-          width="110%"
         />
       </div>
-      <div class="right">
-        <div class="headline">
-          <h5 id="news-headline">
-            {{ headline | replace("\n", "<br />") | safe }}
-          </h5>
+
+      <div class="tile tile-turn">
+        <div class="topbar-left">
+          <span class="badge-live">● LIVE</span>
+          <span class="turn-label">Turn <strong>{{ turn }}</strong> / 6</span>
         </div>
-        <div>
-          <h4>Total Asset: $<span id="capital">{{ capital }}</span></h4>
-          <h4>
-            Stock Portfolio: $<span id="portfolio">{{ portfolio_value }}</span>
-          </h4>
-          <h4>Cash: $<span id="cash">{{ cash }}</span></h4>
-        </div>
+        <div id="timer" class="timer">Time Left: 01:00</div>
+      </div>
+
+      <div class="tile tile-headline">
+        <span class="headline-icon">📰</span>
+        <h5 id="news-headline">
+          {{ headline | replace("\n", "<br />") | safe }}
+        </h5>
+      </div>
+
+      <div class="tile tile-stats">
+        <h4>Total Assets: $<span id="capital">{{ capital }}</span></h4>
+        <h4>Stock Portfolio: $<span id="portfolio">{{ portfolio_value }}</span></h4>
+        <h4>Cash: $<span id="cash" class="accent-green">{{ cash }}</span></h4>
+      </div>
+
+      <div class="tile tile-order">
         <div class="ticker">
           {% for ticker, data in stock_data.items() %}
           <button onclick="selectTicker('{{ ticker }}')">
-            {{ ticker }}: $<span id="price-{{ ticker }}"
-              >{{ data['price'] }}</span
-            >
+            {{ ticker }}: $<span id="price-{{ ticker }}">{{ data['price'] }}</span>
           </button>
           {% endfor %}
         </div>
-        <div class="total">
+
+        <div class="total-line">
           <h4>Total: $<span id="total-price">0.00</span></h4>
         </div>
-        <button onclick="trade('Buy')">Buy</button>
-        <input
-          type="number"
-          id="quantity"
-          value="1"
-          min="1"
-          max="10000"
-          oninput="updateTotal()"
-        />
-        <button onclick="trade('Sell')">Sell</button>
-        <h3>Stock Holdings</h3>
+
+        <div class="order-row">
+          <button class="btn-buy" onclick="trade('Buy')">Buy</button>
+          <input
+            type="number"
+            id="quantity"
+            value="1"
+            min="1"
+            max="10000"
+            oninput="updateTotal()"
+          />
+          <button class="btn-sell" onclick="trade('Sell')">Sell</button>
+        </div>
+      </div>
+
+      <div class="tile tile-holdings">
+        <h3 class="holdings-title">Stock Holdings</h3>
         <table>
-          <tr>
-            <th>Stock</th>
-            <th>Quantity Owned</th>
-            <th>Stock Value ($)</th>
-          </tr>
-          {% for ticker, data in stock_data.items() %}
-          <tr>
-            <td>{{ ticker }}</td>
-            <td id="holdings-{{ ticker }}">{{ holdings.get(ticker, 0) }}</td>
-            <td
-              id="stock-value-{{ ticker }}"
-              class="stock-value"
-              data-ticker="{{ ticker }}"
-              data-prev-value="{{ last_turn_values.get(ticker, 0) }}"
-            >
-              {{ (holdings.get(ticker, 0) * data['price'])|round(2) }}
-            </td>
-          </tr>
-          {% endfor %}
+          <thead>
+            <tr>
+              <th>Stock</th>
+              <th>Quantity Owned</th>
+              <th>Stock Value ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ticker, data in stock_data.items() %}
+            <tr>
+              <td>{{ ticker }}</td>
+              <td id="holdings-{{ ticker }}">{{ holdings.get(ticker, 0) }}</td>
+              <td
+                id="stock-value-{{ ticker }}"
+                class="stock-value"
+                data-ticker="{{ ticker }}"
+                data-prev-value="{{ last_turn_values.get(ticker, 0) }}"
+              >
+                {{ (holdings.get(ticker, 0) * data['price'])|round(2) }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
         </table>
       </div>
     </div>
+
     <script>
       let selectedTicker = "TSLA";
       // Parse holdings from the server-side context
@@ -205,14 +150,14 @@
 
           // ✅ Ensure color coding for stock value
           if (totalValue > previousValue) {
-            valueElement.style.color = "green";
+            valueElement.style.color = "#22c55e";
             valueElement.style.fontWeight = "bold";
           } else if (totalValue < previousValue) {
-            valueElement.style.color = "red";
-            valueElement.style.color = "red";
+            valueElement.style.color = "#ef4444";
+            valueElement.style.color = "#ef4444";
             valueElement.style.fontWeight = "bold";
           } else {
-            valueElement.style.color = "black";
+            valueElement.style.color = "#e5e7eb";
             valueElement.style.fontWeight = "normal";
           }
 
@@ -292,7 +237,7 @@
           `.ticker button[onclick="selectTicker('${ticker}')"]`
         );
         if (selectedButton) {
-          selectedButton.style.backgroundColor = "#007bff"; // Blue highlight
+          selectedButton.style.backgroundColor = "#3b82f6"; // Blue highlight
           selectedButton.style.color = "white"; // White text
         }
 
