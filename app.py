@@ -326,9 +326,16 @@ def trade():
     )
 
     print(f"[DEBUG] User: {username}, Turn: {turn + 1}, Holdings: {holdings}, Portfolio Value: {portfolio_value}")
-    
+
     cash = session.get("cash", user.capital)  # Keep track of cash separately
-    
+
+    # Price history up to (and including) the current turn only — never
+    # reveal future turns' prices, that would spoil the hidden-ROI mechanic.
+    price_history = {
+        ticker: [STOCK_PRICES[t][ticker]["price"] for t in range(turn + 1)]
+        for ticker in TICKERS
+    }
+
     return render_template(
         "trade.html",
         username=username,
@@ -339,7 +346,8 @@ def trade():
         portfolio_value=portfolio_value,
         headline=current_headline,  # Pass headline to frontend
         last_turn_values=last_turn_values,  # ✅ Pass last turn values
-        turn=turn + 1   
+        price_history=price_history,
+        turn=turn + 1
     )
 
 @app.route("/action", methods=["POST"])

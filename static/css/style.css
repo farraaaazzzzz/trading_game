@@ -216,15 +216,47 @@ body {
   grid-column: 1;
   grid-row: 3 / span 2;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
+  flex-direction: column;
+  padding: 16px 18px;
 }
 
-.tile-chart img {
+.chart-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.chart-ticker-label {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.chart-price-label {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.chart-change-label {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.chart-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+#price-chart {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  display: block;
 }
 
 .topbar-left {

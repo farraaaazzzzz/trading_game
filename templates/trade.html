@@ -24,11 +24,14 @@
       </div>
 
       <div class="tile tile-chart">
-        <img
-          id="stock-image"
-          src="{{ stock_data['TSLA']['image'] }}"
-          alt="Stock Image"
-        />
+        <div class="chart-header">
+          <span id="chart-ticker-label" class="chart-ticker-label">TSLA</span>
+          <span id="chart-price-label" class="chart-price-label"></span>
+          <span id="chart-change-label" class="chart-change-label"></span>
+        </div>
+        <div class="chart-wrap">
+          <svg id="price-chart" viewBox="0 0 600 260" preserveAspectRatio="none"></svg>
+        </div>
       </div>
 
       <div class="tile tile-stats">
@@ -98,7 +101,94 @@
       let selectedTicker = "TSLA";
       // Parse holdings from the server-side context
       let holdings = JSON.parse(`{{ holdings | tojson | safe }}`);
+      let priceHistory = JSON.parse(`{{ price_history | tojson | safe }}`);
       let timeLeft = 60; // Total time for each turn in seconds
+
+      function drawChart(ticker) {
+        const series = priceHistory[ticker] || [];
+        const svg = document.getElementById("price-chart");
+        svg.innerHTML = "";
+        if (series.length === 0) return;
+
+        const width = 600;
+        const height = 260;
+        const padX = 12;
+        const padY = 18;
+
+        const min = Math.min(...series);
+        const max = Math.max(...series);
+        const range = max - min || 1;
+
+        const up = series[series.length - 1] >= series[0];
+        const lineColor = up ? "#22c55e" : "#ef4444";
+
+        const points = series.map((price, i) => {
+          const x =
+            series.length === 1
+              ? width / 2
+              : padX + (i * (width - padX * 2)) / (series.length - 1);
+          const y =
+            height - padY - ((price - min) / range) * (height - padY * 2);
+          return [x, y];
+        });
+
+        const pointsAttr = points.map((p) => p.join(",")).join(" ");
+
+        const svgns = "http://www.w3.org/2000/svg";
+
+        // Filled area under the line
+        const areaPoints =
+          `${points[0][0]},${height} ` +
+          pointsAttr +
+          ` ${points[points.length - 1][0]},${height}`;
+        const gradientId = "chart-fill-gradient";
+        const defs = document.createElementNS(svgns, "defs");
+        defs.innerHTML = `
+          <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.35" />
+            <stop offset="100%" stop-color="${lineColor}" stop-opacity="0" />
+          </linearGradient>
+        `;
+        svg.appendChild(defs);
+
+        const area = document.createElementNS(svgns, "polygon");
+        area.setAttribute("points", areaPoints);
+        area.setAttribute("fill", `url(#${gradientId})`);
+        svg.appendChild(area);
+
+        const line = document.createElementNS(svgns, "polyline");
+        line.setAttribute("points", pointsAttr);
+        line.setAttribute("fill", "none");
+        line.setAttribute("stroke", lineColor);
+        line.setAttribute("stroke-width", "2.5");
+        line.setAttribute("stroke-linejoin", "round");
+        line.setAttribute("stroke-linecap", "round");
+        svg.appendChild(line);
+
+        points.forEach(([x, y], i) => {
+          const dot = document.createElementNS(svgns, "circle");
+          dot.setAttribute("cx", x);
+          dot.setAttribute("cy", y);
+          dot.setAttribute("r", i === points.length - 1 ? 4.5 : 3);
+          dot.setAttribute("fill", lineColor);
+          const title = document.createElementNS(svgns, "title");
+          title.textContent = `Turn ${i + 1}: $${series[i].toFixed(2)}`;
+          dot.appendChild(title);
+          svg.appendChild(dot);
+        });
+
+        const first = series[0];
+        const last = series[series.length - 1];
+        const pctChange = ((last - first) / first) * 100;
+
+        document.getElementById("chart-ticker-label").innerText = ticker;
+        document.getElementById("chart-price-label").innerText =
+          "$" + last.toFixed(2);
+        const changeLabel = document.getElementById("chart-change-label");
+        changeLabel.innerText =
+          (pctChange >= 0 ? "▲ " : "▼ ") + Math.abs(pctChange).toFixed(2) + "%";
+        changeLabel.style.color = lineColor;
+      }
 
       function updateCapital(value) {
         let safeValue = parseFloat(value) || 0; // 🔹 Ensure it's a number
@@ -241,10 +331,7 @@
           selectedButton.style.color = "white"; // White text
         }
 
-        let turn = "{{ turn }}"; // Ensure it's properly converted to a string
-        document.getElementById(
-          "stock-image"
-        ).src = `/static/turn${turn}/${ticker}.png`;
+        drawChart(ticker);
         updateTotal();
       }
 
