@@ -31,12 +31,12 @@ class UserHoldings(db.Model):
     user = db.relationship('User', backref=db.backref('holdings', lazy=True))
 
 HEADLINES = [
-    "'Elon Musk's $5 Billion Tesla Stock Sale Raises Eyebrows.'\n\n\n'ExxonMobil Announces Final Investment Decision (FID) for Mega China Petchem Project.'\n\n\n",
-    "'Netflix Faces Surge in Phishing Attacks: Over 50% of Users were Targeted.'\n\n\n'P&G's Acquisition of Farmacy Beauty Strengthens Skincare Portfolio and Appeals to Younger Consumers.'\n\n",
-    "'ExxonMobil's $25 Billion Annual Investment Plan Through Next 5 years Sparks Investor Optimism Amid Rising Oil Prices.'\n\n'Netflix Dominates Streaming Market with Over 210 Million Subscribers, Outpacing Disney+ by More Than 100 Million.'\n\n",
-    "'Tesla Faked Original Full Self-Driving Video, Former Employees Allege.'\n\n\n'Procter & Gamble is unlikely to repeat its stellar performance of recent years, however, it is an excellent wealth preservation vehicle.'\n\n",
-    "'Hyundai Ioniq 5 Emerges as Strong Competitor, Posing Threat to Tesla's Market Share in EV Segment.'\n\n'Netflix Planning to change their No-Ad Strategy Amid Slowing Subscriber Growth, Analyst Warns.'\n\n",
-    "'Sell All the Shares of the Stocks you Own.'\n\n\n\n\n\n",
+    "'Elon Musk's $5 Billion Tesla Stock Sale Raises Eyebrows.'\n'ExxonMobil Announces Final Investment Decision (FID) for Mega China Petchem Project.'",
+    "'Netflix Faces Surge in Phishing Attacks: Over 50% of Users were Targeted.'\n'P&G's Acquisition of Farmacy Beauty Strengthens Skincare Portfolio and Appeals to Younger Consumers.'",
+    "'ExxonMobil's $25 Billion Annual Investment Plan Through Next 5 years Sparks Investor Optimism Amid Rising Oil Prices.'\n'Netflix Dominates Streaming Market with Over 210 Million Subscribers, Outpacing Disney+ by More Than 100 Million.'",
+    "'Tesla Faked Original Full Self-Driving Video, Former Employees Allege.'\n'Procter & Gamble is unlikely to repeat its stellar performance of recent years, however, it is an excellent wealth preservation vehicle.'",
+    "'Hyundai Ioniq 5 Emerges as Strong Competitor, Posing Threat to Tesla's Market Share in EV Segment.'\n'Netflix Planning to change their No-Ad Strategy Amid Slowing Subscriber Growth, Analyst Warns.'",
+    "'Sell All the Shares of the Stocks you Own.'",
     ]
 
 # Game configuration: Fixed stock prices & hidden ROI percentages
